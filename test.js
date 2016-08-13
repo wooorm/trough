@@ -33,7 +33,7 @@ test('use()', function (t) {
 
   p = trough();
 
-  t.equal(p.use(function () {}), p, 'should return self');
+  t.equal(p.use(Function.prototype), p, 'should return self');
 
   t.end();
 });
@@ -366,7 +366,6 @@ test('run()', function (t) {
 
       trough().use(function (next) {
         next(val);
-        throw val;
       }).run(function (err) {
         throw err;
       });
