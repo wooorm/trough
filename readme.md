@@ -205,7 +205,7 @@ If `fn` accepts one more argument than the given `input`, a `next`
 function is given (after the input).  `next` must be called, but doesn’t
 have to be called async.
 
-If `next` is given a a value (neither `null` nor `undefined`) as its first
+If `next` is given a value (neither `null` nor `undefined`) as its first
 argument, the pipeline fails and `done` is invoked with that value.
 
 If `next` is given no value (either `null` or `undefined`) as the first
