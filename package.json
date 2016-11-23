@@ -7,19 +7,16 @@
     "middleware",
     "ware"
   ],
-  "dependencies": {},
   "repository": "https://github.com/wooorm/trough",
   "bugs": "https://github.com/wooorm/trough/issues",
   "author": "Titus Wormer <tituswormer@gmail.com> (http://wooorm.com)",
   "contributors": [
     "Titus Wormer <tituswormer@gmail.com> (http://wooorm.com)"
   ],
-  "engines": {
-    "node": ">=0.11.0"
-  },
   "files": [
     "index.js"
   ],
+  "dependencies": {},
   "devDependencies": {
     "browserify": "^13.0.0",
     "esmangle": "^1.0.0",
