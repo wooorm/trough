@@ -1,18 +1,8 @@
-/**
- * @author Titus Wormer
- * @copyright 2015 Titus Wormer
- * @license MIT
- * @module trough
- * @fileoverview Test suite for `trough`.
- */
-
 'use strict';
 
-/* Dependencies. */
 var test = require('tape');
 var trough = require('./');
 
-/* Tests. */
 test('trough()', function (t) {
   t.equal(typeof trough, 'function', 'should be a function');
   t.equal(typeof trough(), 'object', 'should return an object');

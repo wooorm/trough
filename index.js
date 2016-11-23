@@ -1,13 +1,3 @@
-/**
- * @author Titus Wormer
- * @copyright 2016 Titus Wormer
- * @license MIT
- * @module trough
- * @fileoverview Middleware.  Inspired by `segmentio/ware`,
- *   but able to change the values from transformer to
- *   transformer.
- */
-
 'use strict';
 
 /* Expose. */
@@ -16,11 +6,7 @@ module.exports = trough;
 /* Methods. */
 var slice = [].slice;
 
-/**
- * Create new middleware.
- *
- * @return {Object} - Middlewre.
- */
+/* Create new middleware. */
 function trough() {
   var fns = [];
   var middleware = {};
@@ -30,12 +16,8 @@ function trough() {
 
   return middleware;
 
-  /**
-   * Run `fns`.  Last argument must be
-   * a completion handler.
-   *
-   * @param {...*} input - Parameters
-   */
+  /* Run `fns`.  Last argument must be
+   * a completion handler. */
   function run() {
     var index = -1;
     var input = slice.call(arguments, 0, -1);
@@ -49,12 +31,7 @@ function trough() {
 
     return;
 
-    /**
-     * Run the next `fn`, if any.
-     *
-     * @param {Error?} err - Failure.
-     * @param {...*} values - Other input.
-     */
+    /* Run the next `fn`, if any. */
     function next(err) {
       var fn = fns[++index];
       var params = slice.call(arguments, 0);
@@ -85,11 +62,7 @@ function trough() {
     }
   }
 
-  /**
-   * Add `fn` to the list.
-   *
-   * @param {Function} fn - Anything `wrap` accepts.
-   */
+  /* Add `fn` to the list. */
   function use(fn) {
     if (typeof fn !== 'function') {
       throw new Error('Expected `fn` to be a function, not ' + fn);
@@ -101,15 +74,9 @@ function trough() {
   }
 }
 
-/**
- * Wrap `fn`.  Can be sync or async; return a promise,
+/* Wrap `fn`.  Can be sync or async; return a promise,
  * receive a completion handler, return new values and
- * errors.
- *
- * @param {Function} fn - Thing to wrap.
- * @param {Function} next - Completion handler.
- * @return {Function} - Wrapped `fn`.
- */
+ * errors. */
 function wrap(fn, next) {
   var invoked;
 
@@ -151,11 +118,7 @@ function wrap(fn, next) {
     }
   }
 
-  /**
-   * Invoke `next`, only once.
-   *
-   * @param {Error?} err - Optional error.
-   */
+  /* Invoke `next`, only once. */
   function done() {
     if (!invoked) {
       invoked = true;
@@ -164,12 +127,8 @@ function wrap(fn, next) {
     }
   }
 
-  /**
-   * Invoke `done` with one value.
-   * Tracks if an error is passed, too.
-   *
-   * @param {*} value - Optional value.
-   */
+  /* Invoke `done` with one value.
+   * Tracks if an error is passed, too. */
   function then(value) {
     done(null, value);
   }
