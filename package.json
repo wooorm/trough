@@ -1,6 +1,6 @@
 {
   "name": "trough",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Middleware: a channel used to convey a liquid",
   "license": "MIT",
   "keywords": [
