@@ -29,8 +29,6 @@ function trough() {
 
     next.apply(null, [null].concat(input));
 
-    return;
-
     /* Run the next `fn`, if any. */
     function next(err) {
       var fn = fns[++index];
