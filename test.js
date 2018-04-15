@@ -1,7 +1,7 @@
 'use strict';
 
 var test = require('tape');
-var trough = require('./');
+var trough = require('.');
 
 test('trough()', function (t) {
   t.equal(typeof trough, 'function', 'should be a function');
