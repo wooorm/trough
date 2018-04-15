@@ -7,7 +7,7 @@
     "middleware",
     "ware"
   ],
-  "repository": "https://github.com/wooorm/trough",
+  "repository": "wooorm/trough",
   "bugs": "https://github.com/wooorm/trough/issues",
   "author": "Titus Wormer <tituswormer@gmail.com> (http://wooorm.com)",
   "contributors": [
