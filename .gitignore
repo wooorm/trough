@@ -5,3 +5,4 @@ coverage/
 node_modules/
 trough.js
 trough.min.js
+yarn.lock
