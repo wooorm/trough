@@ -4,6 +4,8 @@ var wrap = require('./wrap.js')
 
 module.exports = trough
 
+trough.wrap = wrap
+
 var slice = [].slice
 
 /* Create new middleware. */

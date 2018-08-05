@@ -7,7 +7,7 @@ module.exports = wrap
 /* Wrap `fn`.  Can be sync or async; return a promise,
  * receive a completion handler, return new values and
  * errors. */
-function wrap(fn, next) {
+function wrap(fn, callback) {
   var invoked
 
   return wrapped
@@ -53,7 +53,7 @@ function wrap(fn, next) {
     if (!invoked) {
       invoked = true
 
-      next.apply(null, arguments)
+      callback.apply(null, arguments)
     }
   }
 
