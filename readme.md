@@ -301,7 +301,7 @@ null 'some' 'values'
 
 [license]: license
 
-[author]: http://wooorm.com
+[author]: https://wooorm.com
 
 [ware]: https://github.com/segmentio/ware
 
