@@ -23,7 +23,7 @@ function wrap(fn, callback) {
 
     try {
       result = fn.apply(null, params)
-    } catch (err) {
+    } catch (error) {
       /* Well, this is quite the pickle.  `fn` received
        * a callback and invoked it (thus continuing the
        * pipeline), but later also threw an error.
@@ -31,10 +31,10 @@ function wrap(fn, callback) {
        * so the only thing left to do is to throw the
        * thing instea. */
       if (callback && invoked) {
-        throw err
+        throw error
       }
 
-      return done(err)
+      return done(error)
     }
 
     if (!callback) {
