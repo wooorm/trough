@@ -294,7 +294,7 @@ test('run()', function(t) {
       })
   })
 
-  t.test('should throw errors thrown from `done` (#1)', function(st) {
+  t.test('should not swallow uncaught exceptions (#1)', function(st) {
     st.plan(1)
 
     process.once('uncaughtException', function(err) {
@@ -312,7 +312,7 @@ test('run()', function(t) {
       })
   })
 
-  t.test('should rethrow errors thrown from `done` (#2)', function(st) {
+  t.test('should not swallow uncaught exceptions (#2)', function(st) {
     st.plan(1)
 
     process.once('uncaughtException', function(err) {
@@ -332,7 +332,7 @@ test('run()', function(t) {
       })
   })
 
-  t.test('should throw mixed messages', function(st) {
+  t.test('should not swallow errors in the `done` handler', function(st) {
     var val = new Error('hotel')
 
     st.plan(1)
