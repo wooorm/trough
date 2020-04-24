@@ -13,16 +13,16 @@ function wrap(fn, callback) {
   return wrapped
 
   function wrapped() {
-    var params = slice.call(arguments, 0)
-    var callback = fn.length > params.length
+    var parameters = slice.call(arguments, 0)
+    var callback = fn.length > parameters.length
     var result
 
     if (callback) {
-      params.push(done)
+      parameters.push(done)
     }
 
     try {
-      result = fn.apply(null, params)
+      result = fn.apply(null, parameters)
     } catch (error) {
       // Well, this is quite the pickle.
       // `fn` received a callback and invoked it (thus continuing the pipeline),

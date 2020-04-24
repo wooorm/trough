@@ -3,18 +3,18 @@
 var test = require('tape')
 var trough = require('.')
 
-test('trough()', function(t) {
+test('trough()', function (t) {
   t.equal(typeof trough, 'function', 'should be a function')
   t.equal(typeof trough(), 'object', 'should return an object')
 
   t.end()
 })
 
-test('use()', function(t) {
+test('use()', function (t) {
   var p = trough()
 
   t.throws(
-    function() {
+    function () {
       p.use()
     },
     /Expected `fn` to be a function, not undefined/,
@@ -28,181 +28,181 @@ test('use()', function(t) {
   t.end()
 })
 
-test('synchronous middleware', function(t) {
-  var val = new Error('Foo')
+test('synchronous middleware', function (t) {
+  var value = new Error('Foo')
 
   t.plan(9)
 
   trough()
-    .use(function() {
-      return val
+    .use(function () {
+      return value
     })
-    .run(function(err) {
-      t.equal(err, val, 'should pass returned errors to `done`')
-    })
-
-  trough()
-    .use(function() {
-      throw val
-    })
-    .run(function(err) {
-      t.equal(err, val, 'should pass thrown errors to `done`')
+    .run(function (err) {
+      t.equal(err, value, 'should pass returned errors to `done`')
     })
 
   trough()
-    .use(function(value) {
+    .use(function () {
+      throw value
+    })
+    .run(function (err) {
+      t.equal(err, value, 'should pass thrown errors to `done`')
+    })
+
+  trough()
+    .use(function (value) {
       t.equal(value, 'some', 'should pass values to `fn`s')
     })
-    .run('some', function(err, value) {
+    .run('some', function (err, value) {
       t.ifErr(err)
       t.equal(value, 'some', 'should pass values to `done`')
     })
 
   trough()
-    .use(function(value) {
+    .use(function (value) {
       t.equal(value, 'some', 'should pass values to `fn`s')
       return value + 'thing'
     })
-    .use(function(value) {
+    .use(function (value) {
       t.equal(value, 'something', 'should modify values')
       return value + ' more'
     })
-    .run('some', function(err, value) {
+    .run('some', function (err, value) {
       t.ifErr(err)
       t.equal(value, 'something more', 'should pass modified values to `done`')
     })
 })
 
-test('promise middleware', function(t) {
-  var val = new Error('Foo')
+test('promise middleware', function (t) {
+  var value = new Error('Foo')
 
   t.plan(8)
 
   trough()
-    .use(function() {
-      return new Promise(function(resolve, reject) {
-        reject(val)
+    .use(function () {
+      return new Promise(function (resolve, reject) {
+        reject(value)
       })
     })
-    .run(function(err) {
-      t.equal(err, val, 'should pass rejected errors to `done`')
+    .run(function (err) {
+      t.equal(err, value, 'should pass rejected errors to `done`')
     })
 
   trough()
-    .use(function(value) {
+    .use(function (value) {
       t.equal(value, 'some', 'should pass values to `fn`s')
 
-      return new Promise(function(resolve) {
+      return new Promise(function (resolve) {
         resolve()
       })
     })
-    .run('some', function(err, value) {
+    .run('some', function (err, value) {
       t.ifErr(err)
       t.equal(value, 'some', 'should pass values to `done`')
     })
 
   trough()
-    .use(function(value) {
+    .use(function (value) {
       t.equal(value, 'some', 'should pass values to `fn`s')
 
-      return new Promise(function(resolve) {
+      return new Promise(function (resolve) {
         resolve(value + 'thing')
       })
     })
-    .use(function(value) {
+    .use(function (value) {
       t.equal(value, 'something', 'should modify values')
 
-      return new Promise(function(resolve) {
+      return new Promise(function (resolve) {
         resolve(value + ' more')
       })
     })
-    .run('some', function(err, value) {
+    .run('some', function (err, value) {
       t.ifErr(err)
       t.equal(value, 'something more', 'should pass modified values to `done`')
     })
 })
 
-test('asynchronous middleware', function(t) {
-  var val = new Error('Foo')
+test('asynchronous middleware', function (t) {
+  var value = new Error('Foo')
 
   t.plan(11)
 
   trough()
-    .use(function(next) {
-      next(val)
+    .use(function (next) {
+      next(value)
     })
-    .run(function(err) {
-      t.equal(err, val, 'should pass given errors to `done`')
+    .run(function (err) {
+      t.equal(err, value, 'should pass given errors to `done`')
     })
 
   trough()
-    .use(function(next) {
-      setImmediate(function() {
-        next(val)
+    .use(function (next) {
+      setImmediate(function () {
+        next(value)
       })
     })
-    .run(function(err) {
-      t.equal(err, val, 'should pass async given errors to `done`')
+    .run(function (err) {
+      t.equal(err, value, 'should pass async given errors to `done`')
     })
 
   trough()
-    .use(function(next) {
-      next(val)
+    .use(function (next) {
+      next(value)
       next(new Error('Other'))
     })
-    .run(function(err) {
-      t.equal(err, val, 'should ignore multiple sync `next` calls')
+    .run(function (err) {
+      t.equal(err, value, 'should ignore multiple sync `next` calls')
     })
 
   trough()
-    .use(function(next) {
-      setImmediate(function() {
-        next(val)
-        setImmediate(function() {
+    .use(function (next) {
+      setImmediate(function () {
+        next(value)
+        setImmediate(function () {
           next(new Error('Other'))
         })
       })
     })
-    .run(function(err) {
-      t.equal(err, val, 'should ignore multiple async `next` calls')
+    .run(function (err) {
+      t.equal(err, value, 'should ignore multiple async `next` calls')
     })
 
   trough()
-    .use(function(value, next) {
+    .use(function (value, next) {
       t.equal(value, 'some', 'should pass values to `fn`s')
       setImmediate(next)
     })
-    .run('some', function(err, value) {
+    .run('some', function (err, value) {
       t.ifErr(err)
       t.equal(value, 'some', 'should pass values to `done`')
     })
 
   trough()
-    .use(function(value, next) {
+    .use(function (value, next) {
       t.equal(value, 'some', 'should pass values to `fn`s')
 
-      setImmediate(function() {
+      setImmediate(function () {
         next(null, value + 'thing')
       })
     })
-    .use(function(value, next) {
+    .use(function (value, next) {
       t.equal(value, 'something', 'should modify values')
 
-      setImmediate(function() {
+      setImmediate(function () {
         next(null, value + ' more')
       })
     })
-    .run('some', function(err, value) {
+    .run('some', function (err, value) {
       t.ifErr(err)
       t.equal(value, 'something more', 'should pass modified values to `done`')
     })
 })
 
-test('run()', function(t) {
+test('run()', function (t) {
   t.plan(13)
 
   t.throws(
-    function() {
+    function () {
       trough().run()
     },
     /^Error: Expected function as last argument, not undefined$/,
@@ -210,142 +210,142 @@ test('run()', function(t) {
   )
 
   trough()
-    .use(function(value) {
+    .use(function (value) {
       t.equal(value, 'some', 'input')
 
       return value + 'thing'
     })
-    .use(function(value) {
+    .use(function (value) {
       t.equal(value, 'something', 'sync')
 
-      return new Promise(function(resolve) {
+      return new Promise(function (resolve) {
         resolve(value + ' more')
       })
     })
-    .use(function(value, next) {
+    .use(function (value, next) {
       t.equal(value, 'something more', 'promise')
 
-      setImmediate(function() {
+      setImmediate(function () {
         next(null, value + '.')
       })
     })
-    .run('some', function(err, value) {
+    .run('some', function (err, value) {
       t.ifErr(err)
       t.equal(value, 'something more.', 'async')
     })
 
-  t.test('should throw errors thrown from `done` (#1)', function(st) {
+  t.test('should throw errors thrown from `done` (#1)', function (st) {
     st.plan(1)
 
-    st.throws(function() {
-      trough().run(function() {
+    st.throws(function () {
+      trough().run(function () {
         throw new Error('alpha')
       })
     }, /^Error: alpha$/)
   })
 
-  t.test('should throw errors thrown from `done` (#2)', function(st) {
+  t.test('should throw errors thrown from `done` (#2)', function (st) {
     st.plan(1)
 
-    process.once('uncaughtException', function(err) {
+    process.once('uncaughtException', function (err) {
       st.equal(String(err), 'Error: bravo')
     })
 
     trough()
-      .use(function(next) {
+      .use(function (next) {
         setImmediate(next)
       })
-      .run(function() {
+      .run(function () {
         throw new Error('bravo')
       })
   })
 
-  t.test('should rethrow errors thrown from `done` (#1)', function(st) {
+  t.test('should rethrow errors thrown from `done` (#1)', function (st) {
     st.plan(1)
 
-    process.once('uncaughtException', function(err) {
+    process.once('uncaughtException', function (err) {
       st.equal(String(err), 'Error: bravo')
     })
 
     trough()
-      .use(function(next) {
-        setImmediate(function() {
+      .use(function (next) {
+        setImmediate(function () {
           next(new Error('bravo'))
         })
       })
-      .run(function(err) {
+      .run(function (err) {
         throw err
       })
   })
 
-  t.test('should rethrow errors thrown from `done` (#2)', function(st) {
+  t.test('should rethrow errors thrown from `done` (#2)', function (st) {
     st.plan(1)
 
-    process.once('uncaughtException', function(err) {
+    process.once('uncaughtException', function (err) {
       st.equal(String(err), 'Error: bravo')
     })
 
     trough()
-      .use(function() {
+      .use(function () {
         throw new Error('bravo')
       })
-      .run(function(err) {
+      .run(function (err) {
         throw err
       })
   })
 
-  t.test('should not swallow uncaught exceptions (#1)', function(st) {
+  t.test('should not swallow uncaught exceptions (#1)', function (st) {
     st.plan(1)
 
-    process.once('uncaughtException', function(err) {
+    process.once('uncaughtException', function (err) {
       st.equal(String(err), 'Error: charlie')
     })
 
     trough()
-      .use(function(next) {
+      .use(function (next) {
         setImmediate(next)
       })
-      .run(function() {
-        setImmediate(function() {
+      .run(function () {
+        setImmediate(function () {
           throw new Error('charlie')
         })
       })
   })
 
-  t.test('should not swallow uncaught exceptions (#2)', function(st) {
+  t.test('should not swallow uncaught exceptions (#2)', function (st) {
     st.plan(1)
 
-    process.once('uncaughtException', function(err) {
+    process.once('uncaughtException', function (err) {
       st.equal(String(err), 'Error: charlie')
     })
 
     trough()
-      .use(function(next) {
-        setImmediate(function() {
+      .use(function (next) {
+        setImmediate(function () {
           next(new Error('charlie'))
         })
       })
-      .run(function(err) {
-        setImmediate(function() {
+      .run(function (err) {
+        setImmediate(function () {
           throw err
         })
       })
   })
 
-  t.test('should not swallow errors in the `done` handler', function(st) {
-    var val = new Error('hotel')
+  t.test('should not swallow errors in the `done` handler', function (st) {
+    var value = new Error('hotel')
 
     st.plan(1)
 
-    process.once('uncaughtException', function(err) {
-      st.equal(err, val, 'should pass the error')
+    process.once('uncaughtException', function (err) {
+      st.equal(err, value, 'should pass the error')
     })
 
     trough()
-      .use(function(next) {
-        next(val)
+      .use(function (next) {
+        next(value)
       })
-      .run(function(err) {
+      .run(function (err) {
         throw err
       })
   })

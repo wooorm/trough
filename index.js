@@ -33,8 +33,8 @@ function trough() {
     // Run the next `fn`, if any.
     function next(err) {
       var fn = fns[++index]
-      var params = slice.call(arguments, 0)
-      var values = params.slice(1)
+      var parameters = slice.call(arguments, 0)
+      var values = parameters.slice(1)
       var length = input.length
       var pos = -1
 
