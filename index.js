@@ -43,7 +43,7 @@ function trough() {
         return
       }
 
-      // Copy non-nully input into values.
+      // Copy non-nullish input into values.
       while (++pos < length) {
         if (values[pos] === null || values[pos] === undefined) {
           values[pos] = input[pos]

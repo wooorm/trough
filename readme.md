@@ -79,16 +79,16 @@ It must be called.
 
 The first value in `input` is called the main input value.
 All other input values are called the rest input values.
-The values given to `callback` are the input values, merged with every non-nully
-output value.
+The values given to `callback` are the input values, merged with every
+non-nullish output value.
 
 *   If `middleware` throws an error, returns a promise that is rejected, or
     calls the given `done` function with an error, `callback` is invoked with
     that error
 *   If `middleware` returns a value or returns a promise that is resolved, that
     value is the main output value
-*   If `middleware` calls `done`, all non-nully values except for the first one
-    (the error) overwrite the output values
+*   If `middleware` calls `done`, all non-nullish values except for the first
+    one (the error) overwrite the output values
 
 ### `Trough`
 
@@ -245,8 +245,8 @@ If `next` is given a value (neither `null` nor `undefined`) as its first
 argument, the pipeline fails and `done` is invoked with that value.
 
 If `next` is given no value (either `null` or `undefined`) as the first
-argument, all following non-nully values change the input of the following
-function, and all nully values default to the `input`.
+argument, all following non-nullish values change the input of the following
+function, and all nullish values default to the `input`.
 
 The following example shows how passing a first argument stops the pipeline:
 
