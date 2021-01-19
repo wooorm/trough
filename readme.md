@@ -293,9 +293,9 @@ null 'some' 'values'
 
 <!-- Definitions -->
 
-[build-badge]: https://img.shields.io/travis/wooorm/trough.svg
+[build-badge]: https://github.com/wooorm/trough/workflows/main/badge.svg
 
-[build]: https://travis-ci.org/wooorm/trough
+[build]: https://github.com/wooorm/trough/actions
 
 [coverage-badge]: https://img.shields.io/codecov/c/github/wooorm/trough.svg
 
