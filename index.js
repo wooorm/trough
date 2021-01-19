@@ -31,15 +31,15 @@ function trough() {
     next.apply(null, [null].concat(input))
 
     // Run the next `fn`, if any.
-    function next(err) {
+    function next(error) {
       var fn = fns[++index]
       var parameters = slice.call(arguments, 0)
       var values = parameters.slice(1)
       var length = input.length
       var pos = -1
 
-      if (err) {
-        done(err)
+      if (error) {
+        done(error)
         return
       }
 
