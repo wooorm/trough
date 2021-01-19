@@ -8,7 +8,7 @@ module.exports = wrap
 // Can be sync or async; return a promise, receive a completion handler, return
 // new values and errors.
 function wrap(fn, callback) {
-  var invoked
+  var called
 
   return wrapped
 
@@ -25,11 +25,11 @@ function wrap(fn, callback) {
       result = fn.apply(null, parameters)
     } catch (error) {
       // Well, this is quite the pickle.
-      // `fn` received a callback and invoked it (thus continuing the pipeline),
+      // `fn` received a callback and called it (thus continuing the pipeline),
       // but later also threw an error.
       // We’re not about to restart the pipeline again, so the only thing left
       // to do is to throw the thing instead.
-      if (callback && invoked) {
+      if (callback && called) {
         throw error
       }
 
@@ -47,16 +47,15 @@ function wrap(fn, callback) {
     }
   }
 
-  // Invoke `next`, only once.
+  // Call `next`, only once.
   function done() {
-    if (!invoked) {
-      invoked = true
-
+    if (!called) {
+      called = true
       callback.apply(null, arguments)
     }
   }
 
-  // Invoke `done` with one value.
+  // Call `done` with one value.
   // Tracks if an error is passed, too.
   function then(value) {
     done(null, value)

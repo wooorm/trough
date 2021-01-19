@@ -83,7 +83,7 @@ The values given to `callback` are the input values, merged with every
 non-nullish output value.
 
 *   If `middleware` throws an error, returns a promise that is rejected, or
-    calls the given `done` function with an error, `callback` is invoked with
+    calls the given `done` function with an error, `callback` is called with
     that error
 *   If `middleware` returns a value or returns a promise that is resolved, that
     value is the main output value
@@ -97,7 +97,7 @@ A pipeline.
 #### `Trough#run([input…, ]done)`
 
 Run the pipeline (all [`use()`][use]d middleware).
-Invokes [`done`][done] on completion with either an error or the output of the
+Calls [`done`][done] on completion with either an error or the output of the
 last middleware.
 
 > Note!
@@ -106,7 +106,7 @@ last middleware.
 
 ##### `function done(err?, [output…])`
 
-The final handler passed to [`run()`][run], invoked with an error if a
+The final handler passed to [`run()`][run], called with an error if a
 [middleware function][fn] rejected, passed, or threw one, or the output of the
 last middleware function.
 
@@ -116,11 +116,11 @@ Add `fn`, a [middleware function][fn], to the pipeline.
 
 ##### `function fn([input…, ][next])`
 
-A middleware function invoked with the output of its predecessor.
+A middleware function called with the output of its predecessor.
 
 ###### Synchronous
 
-If `fn` returns or throws an error, the pipeline fails and `done` is invoked
+If `fn` returns or throws an error, the pipeline fails and `done` is called
 with that error.
 
 If `fn` returns a value (neither `null` nor `undefined`), the first `input` of
@@ -187,7 +187,7 @@ null 'even more value' 'untouched'
 ###### Promise
 
 If `fn` returns a promise, and that promise rejects, the pipeline fails and
-`done` is invoked with the rejected value.
+`done` is called with the rejected value.
 
 If `fn` returns a promise, and that promise resolves with a value (neither
 `null` nor `undefined`), the first `input` of the next function is set to that
@@ -242,7 +242,7 @@ given (after the input).  `next` must be called, but doesn’t have to be called
 async.
 
 If `next` is given a value (neither `null` nor `undefined`) as its first
-argument, the pipeline fails and `done` is invoked with that value.
+argument, the pipeline fails and `done` is called with that value.
 
 If `next` is given no value (either `null` or `undefined`) as the first
 argument, all following non-nullish values change the input of the following

@@ -18,7 +18,8 @@ function trough() {
 
   return middleware
 
-  // Run `fns`.  Last argument must be a completion handler.
+  // Run `fns`.
+  // Last argument must be a completion handler.
   function run() {
     var index = -1
     var input = slice.call(arguments, 0, -1)
@@ -35,7 +36,6 @@ function trough() {
       var fn = fns[++index]
       var parameters = slice.call(arguments, 0)
       var values = parameters.slice(1)
-      var length = input.length
       var pos = -1
 
       if (error) {
@@ -44,7 +44,7 @@ function trough() {
       }
 
       // Copy non-nullish input into values.
-      while (++pos < length) {
+      while (++pos < input.length) {
         if (values[pos] === null || values[pos] === undefined) {
           values[pos] = input[pos]
         }
