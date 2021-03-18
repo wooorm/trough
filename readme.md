@@ -12,6 +12,9 @@ change the input of the next.
 
 ## Install
 
+This package is ESM only: Node 12+ is needed to use it and it must be `import`ed
+instead of `require`d.
+
 [npm][]:
 
 ```sh
@@ -21,9 +24,9 @@ npm install trough
 ## Use
 
 ```js
-var fs = require('fs')
-var path = require('path')
-var trough = require('trough')
+import fs from 'fs'
+import path from 'path'
+import {trough} from 'trough'
 
 var pipeline = trough()
   .use(function(fileName) {
@@ -66,19 +69,22 @@ null <Buffer 23 20 74 72 6f 75 67 68 20 5b 21 5b 42 75 69 6c 64 20 53 74 61 74 7
 
 ## API
 
+This package exports the following identifiers: `trough` and `wrap`.
+There is no default export.
+
 ### `trough()`
 
 Create a new [`Trough`][trough].
 
-#### `trough.wrap(middleware, callback[, …input])`
+### `wrap(middleware, callback[, …input])`
 
 Call `middleware` with all input.
-If `middleware` accepts more arguments than given in input, and extra `done`
+If `middleware` accepts more arguments than given in input, an extra `done`
 function is passed in after the input when calling it.
-It must be called.
+In that case, `done` must be called.
 
-The first value in `input` is called the main input value.
-All other input values are called the rest input values.
+The first value in `input` is the main input value.
+All other input values are the rest input values.
 The values given to `callback` are the input values, merged with every
 non-nullish output value.
 
@@ -129,7 +135,7 @@ the next function is set to that value (all other `input` is passed through).
 The following example shows how returning an error stops the pipeline:
 
 ```js
-var trough = require('trough')
+import {trough} from 'trough'
 
 trough()
   .use(function(val) {
@@ -149,7 +155,7 @@ Error: Got: some value
 The following example shows how throwing an error stops the pipeline:
 
 ```js
-var trough = require('trough')
+import {trough} from 'trough'
 
 trough()
   .use(function(val) {
@@ -169,7 +175,7 @@ Error: Got: more value
 The following example shows how the first output can be modified:
 
 ```js
-var trough = require('trough')
+import {trough} from 'trough'
 
 trough()
   .use(function(val) {
@@ -196,7 +202,7 @@ value (all other `input` is passed through).
 The following example shows how rejecting a promise stops the pipeline:
 
 ```js
-var trough = require('trough')
+import {trough} from 'trough'
 
 trough()
   .use(function(val) {
@@ -216,7 +222,7 @@ Got: val
 The following example shows how the input isn’t touched by resolving to `null`.
 
 ```js
-var trough = require('trough')
+import {trough} from 'trough'
 
 trough()
   .use(function() {
@@ -251,7 +257,7 @@ function, and all nullish values default to the `input`.
 The following example shows how passing a first argument stops the pipeline:
 
 ```js
-var trough = require('trough')
+import {trough} from 'trough'
 
 trough()
   .use(function(val, next) {
@@ -270,7 +276,7 @@ Error: Got: val
 The following example shows how more values than the input are passed.
 
 ```js
-var trough = require('trough')
+import {trough} from 'trough'
 
 trough()
   .use(function(val, next) {

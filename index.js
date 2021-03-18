@@ -1,41 +1,26 @@
-'use strict'
-
-var wrap = require('./wrap.js')
-
-module.exports = trough
-
-trough.wrap = wrap
-
-var slice = [].slice
-
 // Create new middleware.
-function trough() {
+export function trough() {
   var fns = []
-  var middleware = {}
-
-  middleware.run = run
-  middleware.use = use
+  var middleware = {run, use}
 
   return middleware
 
   // Run `fns`.
   // Last argument must be a completion handler.
-  function run() {
+  function run(...input) {
     var index = -1
-    var input = slice.call(arguments, 0, -1)
-    var done = arguments[arguments.length - 1]
+    var done = input.pop()
 
     if (typeof done !== 'function') {
-      throw new Error('Expected function as last argument, not ' + done)
+      throw new TypeError('Expected function as last argument, not ' + done)
     }
 
-    next.apply(null, [null].concat(input))
+    next(null, ...input)
 
     // Run the next `fn`, if any.
-    function next(error) {
+    function next(...values) {
       var fn = fns[++index]
-      var parameters = slice.call(arguments, 0)
-      var values = parameters.slice(1)
+      var error = values.shift()
       var pos = -1
 
       if (error) {
@@ -50,13 +35,11 @@ function trough() {
         }
       }
 
-      input = values
-
       // Next or done.
       if (fn) {
-        wrap(fn, next).apply(null, input)
+        wrap(fn, next)(...values)
       } else {
-        done.apply(null, [null].concat(input))
+        done(null, ...values)
       }
     }
   }
@@ -64,11 +47,67 @@ function trough() {
   // Add `fn` to the list.
   function use(fn) {
     if (typeof fn !== 'function') {
-      throw new Error('Expected `fn` to be a function, not ' + fn)
+      throw new TypeError('Expected `fn` to be a function, not ' + fn)
     }
 
     fns.push(fn)
-
     return middleware
+  }
+}
+
+// Wrap `fn`.
+// Can be sync or async; return a promise, receive a completion handler, return
+// new values and errors.
+export function wrap(fn, callback) {
+  var called
+
+  return wrapped
+
+  function wrapped(...parameters) {
+    var callback = fn.length > parameters.length
+    var result
+
+    if (callback) {
+      parameters.push(done)
+    }
+
+    try {
+      result = fn(...parameters)
+    } catch (error) {
+      // Well, this is quite the pickle.
+      // `fn` received a callback and called it (thus continuing the pipeline),
+      // but later also threw an error.
+      // We’re not about to restart the pipeline again, so the only thing left
+      // to do is to throw the thing instead.
+      if (callback && called) {
+        throw error
+      }
+
+      return done(error)
+    }
+
+    if (!callback) {
+      if (result && typeof result.then === 'function') {
+        result.then(then, done)
+      } else if (result instanceof Error) {
+        done(result)
+      } else {
+        then(result)
+      }
+    }
+  }
+
+  // Call `next`, only once.
+  function done() {
+    if (!called) {
+      called = true
+      callback(...arguments)
+    }
+  }
+
+  // Call `done` with one value.
+  // Tracks if an error is passed, too.
+  function then(value) {
+    done(null, value)
   }
 }

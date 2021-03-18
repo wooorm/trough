@@ -1,7 +1,5 @@
-'use strict'
-
-var test = require('tape')
-var trough = require('.')
+import test from 'tape'
+import {trough} from './index.js'
 
 test('trough()', function (t) {
   t.equal(typeof trough, 'function', 'should be a function')
@@ -205,7 +203,7 @@ test('run()', function (t) {
     function () {
       trough().run()
     },
-    /^Error: Expected function as last argument, not undefined$/,
+    /^TypeError: Expected function as last argument, not undefined$/,
     'should throw if `done` is not a function'
   )
 
