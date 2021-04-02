@@ -76,7 +76,7 @@ There is no default export.
 
 Create a new [`Trough`][trough].
 
-### `wrap(middleware, callback[, …input])`
+### `wrap(middleware, callback)(…input)`
 
 Call `middleware` with all input.
 If `middleware` accepts more arguments than given in input, an extra `done`
