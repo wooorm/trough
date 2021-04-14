@@ -53,10 +53,11 @@
 
 /**
  * Create new middleware.
+ * @template MainOutputValue, RestOutputValue
  */
 export function trough() {
   /**
-   * @template MainOutputValue, RestOutputValue
+   
    * @type {Middleware<MainOutputValue, RestOutputValue>[]}
    */
   var fns = []
@@ -67,8 +68,8 @@ export function trough() {
   /**
    * Call all middleware.
    *
-   * @template MainOutputValue, RestOutputValue
-   * @param {[Callback<MainOutputValue, RestOutputValue>] | [...unknown[], Callback<MainOutputValue, RestOutputValue>]} values
+   * @template Value
+   * @param {[...Value[], Callback<MainOutputValue, RestOutputValue>]} values
    */
   function run(...values) {
     var middlewareIndex = -1
@@ -87,7 +88,7 @@ export function trough() {
      *
      * @template MainOutputValue, RestOutputValue
      * @param {Error?} error
-     * @param {[MainOutputValue] | [MainOutputValue, ...RestOutputValue[]]} [output]
+     * @param {[MainOutputValue?, ...RestOutputValue[]]} [output]
      */
     function next(error, ...output) {
       var fn = fns[++middlewareIndex]
@@ -116,7 +117,6 @@ export function trough() {
 
   /**
    * Add `fn` to the list.
-   * @template MainOutputValue, RestOutputValue
    * @param {Middleware<MainOutputValue, RestOutputValue>} middelware
    */
   function use(middelware) {
@@ -196,7 +196,7 @@ export function wrap(middleware, callback) {
   /**
    * Call `callback`, only once.
    *
-   * @param {([] | [Error] | [null, MainOutputValue | void] | [null, MainOutputValue | void, ...RestOutputValue[]])} output
+   * @param {([Error?] | [null, MainOutputValue | void, ...RestOutputValue[]])} output
    */
   function done(...output) {
     if (!called) {

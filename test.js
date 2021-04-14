@@ -22,7 +22,7 @@ test('use()', function (t) {
 
   p = trough()
 
-  t.equal(p.use(Function.prototype), p, 'should return self')
+  t.equal(p.use(/** @type {import("./index.js").Middleware} */ Function.prototype), p, 'should return self')
 
   t.end()
 })
