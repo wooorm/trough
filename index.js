@@ -1,81 +1,31 @@
 /**
- * @callback RejectingCallback
- * @param {Error} error
- * @returns {void}
- */
-
-/**
- * @template MainOutputValue, RestOutputValue
- * @callback ResolvingCallbackVariadic
- * @param {null|undefined} error
- * @param {MainOutputValue} [mainOutput]
- * @param {RestOutputValue[]} [restOutput]
- * @returns {void}
- */
-
-/**
- * @callback ResolvingCallbackVoid
- * @param {null|undefined} error
- * @returns {void}
- */
-
-/**
- * @template MainOutputValue, RestOutputValue
- * @typedef {ResolvingCallbackVoid & ResolvingCallbackVariadic<MainOutputValue, RestOutputValue>} ResolvingCallback
- */
-
-/**
- * @template MainOutputValue, RestOutputValue
- * @typedef {RejectingCallback & ResolvingCallback<MainOutputValue, RestOutputValue>} Callback
- */
-
-/**
- * @template MainOutputValue
- * @callback ReturningMiddleware
- * @param {unknown} mainInput
- * @param {unknown[]} restInput
- * @returns {Error|MainOutputValue|Promise<MainOutputValue>}
- */
-
-/**
- * @template MainOutputValue, RestOutputValue
- * @callback CallingMiddleware
- * @param {unknown} mainInput
- * @param {unknown[]} restInput
- * @param {Callback<MainOutputValue, RestOutputValue>} callback
- * @returns {void}
- */
-
-/**
- * @template MainOutputValue, RestOutputValue
- * @typedef {ReturningMiddleware<MainOutputValue> | CallingMiddleware<MainOutputValue, RestOutputValue>} Middleware
+ * @typedef {(error?: Error|null|undefined, ...output: unknown[]) => void} Callback
+ * @typedef {(...input: unknown[]) => unknown} Middleware
+ *
+ * @typedef {(...input: unknown[]) => void} Run Call all middleware.
+ * @typedef {(fn: Middleware) => Pipeline} Use Add `fn` (middleware) to the list.
+ * @typedef {{run: Run, use: Use}} Pipeline
  */
 
 /**
  * Create new middleware.
- * @template MainOutputValue, RestOutputValue
+ *
+ * @returns {Pipeline}
  */
 export function trough() {
-  /**
-   
-   * @type {Middleware<MainOutputValue, RestOutputValue>[]}
-   */
+  /** @type {Middleware[]} */
   var fns = []
+  /** @type {Pipeline} */
   var pipeline = {run, use}
 
   return pipeline
 
-  /**
-   * Call all middleware.
-   *
-   * @template Value
-   * @param {[...Value[], Callback<MainOutputValue, RestOutputValue>]} values
-   */
+  /** @type {Run} */
   function run(...values) {
     var middlewareIndex = -1
-    // prettier-ignore
-    /** @type {Callback<MainOutputValue, RestOutputValue>} */
-    var callback = (values.pop())
+    /** @type {Callback} */
+    // @ts-expect-error Assume it’s a callback.
+    var callback = values.pop()
 
     if (typeof callback !== 'function') {
       throw new TypeError('Expected function as last argument, not ' + callback)
@@ -86,9 +36,8 @@ export function trough() {
     /**
      * Run the next `fn`, or we’re done.
      *
-     * @template MainOutputValue, RestOutputValue
-     * @param {Error?} error
-     * @param {[MainOutputValue?, ...RestOutputValue[]]} [output]
+     * @param {Error|null|undefined} error
+     * @param {unknown[]} output
      */
     function next(error, ...output) {
       var fn = fns[++middlewareIndex]
@@ -115,10 +64,7 @@ export function trough() {
     }
   }
 
-  /**
-   * Add `fn` to the list.
-   * @param {Middleware<MainOutputValue, RestOutputValue>} middelware
-   */
+  /** @type {Use} */
   function use(middelware) {
     if (typeof middelware !== 'function') {
       throw new TypeError(
@@ -136,9 +82,8 @@ export function trough() {
  * Can be sync or async; return a promise, receive a callback, or return new
  * values and errors.
  *
- * @template MainOutputValue, RestOutputValue
- * @param {ReturningMiddleware<MainOutputValue> | CallingMiddleware<MainOutputValue, RestOutputValue>} middleware
- * @param {Callback<MainOutputValue, RestOutputValue>} callback
+ * @param {Middleware} middleware
+ * @param {Callback} callback
  */
 export function wrap(middleware, callback) {
   /** @type {boolean} */
@@ -153,20 +98,16 @@ export function wrap(middleware, callback) {
    */
   function wrapped(...parameters) {
     var fnExpectsCallback = middleware.length > parameters.length
-    /** @type {Error | MainOutputValue | Promise<MainOutputValue> | void} */
+    /** @type {unknown} */
     var result
     /** @type {Error} */
     var exception
 
     if (fnExpectsCallback) {
-      // @ts-ignore this differentiated `middleware` from being
-      // `ReturningMiddleware` or `CallingMiddleware`, and thus whether a callback
-      // is given.
       parameters.push(done)
     }
 
     try {
-      // @ts-ignore count is off when `done` is passed, but yes, it’s fine.
       result = middleware(...parameters)
     } catch (error) {
       exception = error
@@ -184,6 +125,7 @@ export function wrap(middleware, callback) {
 
     if (!fnExpectsCallback) {
       if (result instanceof Promise) {
+        // type-coverage:ignore-next-line Assume it’s a `Promise<unknown>`
         result.then(then, done)
       } else if (result instanceof Error) {
         done(result)
@@ -195,21 +137,19 @@ export function wrap(middleware, callback) {
 
   /**
    * Call `callback`, only once.
-   *
-   * @param {([Error?] | [null, MainOutputValue | void, ...RestOutputValue[]])} output
+   * @type {Callback}
    */
-  function done(...output) {
+  function done(error, ...output) {
     if (!called) {
       called = true
-      // @ts-ignore count is off.
-      callback(...output)
+      callback(error, ...output)
     }
   }
 
   /**
    * Call `done` with one value.
    *
-   * @param {MainOutputValue | void} [value]
+   * @param {unknown} [value]
    */
   function then(value) {
     done(null, value)
