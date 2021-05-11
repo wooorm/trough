@@ -1,3 +1,7 @@
+/**
+ * @typedef {import('./index.js').Callback} Callback
+ */
+
 import test from 'tape'
 import {trough} from './index.js'
 
@@ -13,15 +17,20 @@ test('use()', function (t) {
 
   t.throws(
     function () {
+      // @ts-ignore expected.
       p.use()
     },
-    /Expected `fn` to be a function, not undefined/,
+    /Expected `middelware` to be a function, not undefined/,
     'should throw without `fn`'
   )
 
   p = trough()
 
-  t.equal(p.use(Function.prototype), p, 'should return self')
+  t.equal(
+    p.use(() => {}),
+    p,
+    'should return self'
+  )
 
   t.end()
 })
@@ -35,7 +44,7 @@ test('synchronous middleware', function (t) {
     .use(function () {
       return value
     })
-    .run(function (error) {
+    .run(function (/** @type {Error} */ error) {
       t.equal(error, value, 'should pass returned errors to `done`')
     })
 
@@ -43,32 +52,42 @@ test('synchronous middleware', function (t) {
     .use(function () {
       throw value
     })
-    .run(function (error) {
+    .run(function (/** @type {Error} */ error) {
       t.equal(error, value, 'should pass thrown errors to `done`')
     })
 
   trough()
-    .use(function (value) {
+    .use(function (/** @type {string} */ value) {
       t.equal(value, 'some', 'should pass values to `fn`s')
     })
-    .run('some', function (error, value) {
-      t.ifErr(error)
-      t.equal(value, 'some', 'should pass values to `done`')
-    })
+    .run(
+      'some',
+      function (/** @type {void} */ error, /** @type {string} */ value) {
+        t.ifErr(error)
+        t.equal(value, 'some', 'should pass values to `done`')
+      }
+    )
 
   trough()
-    .use(function (value) {
+    .use(function (/** @type {string} */ value) {
       t.equal(value, 'some', 'should pass values to `fn`s')
       return value + 'thing'
     })
-    .use(function (value) {
+    .use(function (/** @type {string} */ value) {
       t.equal(value, 'something', 'should modify values')
       return value + ' more'
     })
-    .run('some', function (error, value) {
-      t.ifErr(error)
-      t.equal(value, 'something more', 'should pass modified values to `done`')
-    })
+    .run(
+      'some',
+      function (/** @type {void} */ error, /** @type {string} */ value) {
+        t.ifErr(error)
+        t.equal(
+          value,
+          'something more',
+          'should pass modified values to `done`'
+        )
+      }
+    )
 })
 
 test('promise middleware', function (t) {
@@ -82,42 +101,52 @@ test('promise middleware', function (t) {
         reject(value)
       })
     })
-    .run(function (error) {
+    .run(function (/** @type {Error} */ error) {
       t.equal(error, value, 'should pass rejected errors to `done`')
     })
 
   trough()
-    .use(function (value) {
+    .use(function (/** @type {string} */ value) {
       t.equal(value, 'some', 'should pass values to `fn`s')
 
       return new Promise(function (resolve) {
         resolve()
       })
     })
-    .run('some', function (error, value) {
-      t.ifErr(error)
-      t.equal(value, 'some', 'should pass values to `done`')
-    })
+    .run(
+      'some',
+      function (/** @type {void} */ error, /** @type {string} */ value) {
+        t.ifErr(error)
+        t.equal(value, 'some', 'should pass values to `done`')
+      }
+    )
 
   trough()
-    .use(function (value) {
+    .use(function (/** @type {string} */ value) {
       t.equal(value, 'some', 'should pass values to `fn`s')
 
       return new Promise(function (resolve) {
         resolve(value + 'thing')
       })
     })
-    .use(function (value) {
+    .use(function (/** @type {string} */ value) {
       t.equal(value, 'something', 'should modify values')
 
       return new Promise(function (resolve) {
         resolve(value + ' more')
       })
     })
-    .run('some', function (error, value) {
-      t.ifErr(error)
-      t.equal(value, 'something more', 'should pass modified values to `done`')
-    })
+    .run(
+      'some',
+      function (/** @type {void} */ error, /** @type {string} */ value) {
+        t.ifErr(error)
+        t.equal(
+          value,
+          'something more',
+          'should pass modified values to `done`'
+        )
+      }
+    )
 })
 
 test('asynchronous middleware', function (t) {
@@ -126,34 +155,34 @@ test('asynchronous middleware', function (t) {
   t.plan(11)
 
   trough()
-    .use(function (next) {
+    .use(function (/** @type {Callback} */ next) {
       next(value)
     })
-    .run(function (error) {
+    .run(function (/** @type {Error} */ error) {
       t.equal(error, value, 'should pass given errors to `done`')
     })
 
   trough()
-    .use(function (next) {
+    .use(function (/** @type {Callback} */ next) {
       setImmediate(function () {
         next(value)
       })
     })
-    .run(function (error) {
+    .run(function (/** @type {Error} */ error) {
       t.equal(error, value, 'should pass async given errors to `done`')
     })
 
   trough()
-    .use(function (next) {
+    .use(function (/** @type {Callback} */ next) {
       next(value)
       next(new Error('Other'))
     })
-    .run(function (error) {
+    .run(function (/** @type {Error} */ error) {
       t.equal(error, value, 'should ignore multiple sync `next` calls')
     })
 
   trough()
-    .use(function (next) {
+    .use(function (/** @type {Callback} */ next) {
       setImmediate(function () {
         next(value)
         setImmediate(function () {
@@ -161,39 +190,49 @@ test('asynchronous middleware', function (t) {
         })
       })
     })
-    .run(function (error) {
+    .run(function (/** @type {Error} */ error) {
       t.equal(error, value, 'should ignore multiple async `next` calls')
     })
 
   trough()
-    .use(function (value, next) {
+    .use(function (/** @type {string} */ value, /** @type {Callback} */ next) {
       t.equal(value, 'some', 'should pass values to `fn`s')
       setImmediate(next)
     })
-    .run('some', function (error, value) {
-      t.ifErr(error)
-      t.equal(value, 'some', 'should pass values to `done`')
-    })
+    .run(
+      'some',
+      function (/** @type {void} */ error, /** @type {string} */ value) {
+        t.ifErr(error)
+        t.equal(value, 'some', 'should pass values to `done`')
+      }
+    )
 
   trough()
-    .use(function (value, next) {
+    .use(function (/** @type {string} */ value, /** @type {Callback} */ next) {
       t.equal(value, 'some', 'should pass values to `fn`s')
 
       setImmediate(function () {
         next(null, value + 'thing')
       })
     })
-    .use(function (value, next) {
+    .use(function (/** @type {string} */ value, /** @type {Callback} */ next) {
       t.equal(value, 'something', 'should modify values')
 
       setImmediate(function () {
         next(null, value + ' more')
       })
     })
-    .run('some', function (error, value) {
-      t.ifErr(error)
-      t.equal(value, 'something more', 'should pass modified values to `done`')
-    })
+    .run(
+      'some',
+      function (/** @type {void} */ error, /** @type {string} */ value) {
+        t.ifErr(error)
+        t.equal(
+          value,
+          'something more',
+          'should pass modified values to `done`'
+        )
+      }
+    )
 })
 
 test('run()', function (t) {
@@ -201,6 +240,7 @@ test('run()', function (t) {
 
   t.throws(
     function () {
+      // @ts-ignore expected.
       trough().run()
     },
     /^TypeError: Expected function as last argument, not undefined$/,
@@ -208,29 +248,32 @@ test('run()', function (t) {
   )
 
   trough()
-    .use(function (value) {
+    .use(function (/** @type {string} */ value) {
       t.equal(value, 'some', 'input')
 
       return value + 'thing'
     })
-    .use(function (value) {
+    .use(function (/** @type {string} */ value) {
       t.equal(value, 'something', 'sync')
 
       return new Promise(function (resolve) {
         resolve(value + ' more')
       })
     })
-    .use(function (value, next) {
+    .use(function (/** @type {string} */ value, /** @type {Callback} */ next) {
       t.equal(value, 'something more', 'promise')
 
       setImmediate(function () {
         next(null, value + '.')
       })
     })
-    .run('some', function (error, value) {
-      t.ifErr(error)
-      t.equal(value, 'something more.', 'async')
-    })
+    .run(
+      'some',
+      function (/** @type {void} */ error, /** @type {string} */ value) {
+        t.ifErr(error)
+        t.equal(value, 'something more.', 'async')
+      }
+    )
 
   t.test('should throw errors thrown from `done` (#1)', function (st) {
     st.plan(1)
@@ -250,7 +293,7 @@ test('run()', function (t) {
     })
 
     trough()
-      .use(function (next) {
+      .use(function (/** @type {Callback} */ next) {
         setImmediate(next)
       })
       .run(function () {
@@ -266,12 +309,12 @@ test('run()', function (t) {
     })
 
     trough()
-      .use(function (next) {
+      .use(function (/** @type {Callback} */ next) {
         setImmediate(function () {
           next(new Error('bravo'))
         })
       })
-      .run(function (error) {
+      .run(function (/** @type {Error} */ error) {
         throw error
       })
   })
@@ -287,7 +330,7 @@ test('run()', function (t) {
       .use(function () {
         throw new Error('bravo')
       })
-      .run(function (error) {
+      .run(function (/** @type {Error} */ error) {
         throw error
       })
   })
@@ -300,7 +343,7 @@ test('run()', function (t) {
     })
 
     trough()
-      .use(function (next) {
+      .use(function (/** @type {Callback} */ next) {
         setImmediate(next)
       })
       .run(function () {
@@ -318,12 +361,12 @@ test('run()', function (t) {
     })
 
     trough()
-      .use(function (next) {
+      .use(function (/** @type {Callback} */ next) {
         setImmediate(function () {
           next(new Error('charlie'))
         })
       })
-      .run(function (error) {
+      .run(function (/** @type {Error} */ error) {
         setImmediate(function () {
           throw error
         })
@@ -340,10 +383,10 @@ test('run()', function (t) {
     })
 
     trough()
-      .use(function (next) {
+      .use(function (/** @type {Callback} */ next) {
         next(value)
       })
-      .run(function (error) {
+      .run(function (/** @type {Error} */ error) {
         throw error
       })
   })
