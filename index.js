@@ -55,6 +55,9 @@ export function trough() {
         }
       }
 
+      // Save the newly created `output` for the next call.
+      values = output
+
       // Next or done.
       if (fn) {
         wrap(fn, next)(...output)
