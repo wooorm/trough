@@ -14,18 +14,18 @@
  */
 export function trough() {
   /** @type {Middleware[]} */
-  var fns = []
+  const fns = []
   /** @type {Pipeline} */
-  var pipeline = {run, use}
+  const pipeline = {run, use}
 
   return pipeline
 
   /** @type {Run} */
   function run(...values) {
-    var middlewareIndex = -1
+    let middlewareIndex = -1
     /** @type {Callback} */
     // @ts-expect-error Assume it’s a callback.
-    var callback = values.pop()
+    const callback = values.pop()
 
     if (typeof callback !== 'function') {
       throw new TypeError('Expected function as last argument, not ' + callback)
@@ -40,8 +40,8 @@ export function trough() {
      * @param {unknown[]} output
      */
     function next(error, ...output) {
-      var fn = fns[++middlewareIndex]
-      var index = -1
+      const fn = fns[++middlewareIndex]
+      let index = -1
 
       if (error) {
         callback(error)
@@ -90,7 +90,7 @@ export function trough() {
  */
 export function wrap(middleware, callback) {
   /** @type {boolean} */
-  var called
+  let called
 
   return wrapped
 
@@ -100,11 +100,9 @@ export function wrap(middleware, callback) {
    * @returns {void}
    */
   function wrapped(...parameters) {
-    var fnExpectsCallback = middleware.length > parameters.length
+    const fnExpectsCallback = middleware.length > parameters.length
     /** @type {unknown} */
-    var result
-    /** @type {Error} */
-    var exception
+    let result
 
     if (fnExpectsCallback) {
       parameters.push(done)
@@ -113,7 +111,8 @@ export function wrap(middleware, callback) {
     try {
       result = middleware(...parameters)
     } catch (error) {
-      exception = error
+      /** @type {Error} */
+      const exception = error
 
       // Well, this is quite the pickle.
       // `middleware` received a callback and called it synchronously, but that

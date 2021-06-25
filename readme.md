@@ -28,7 +28,7 @@ import fs from 'fs'
 import path from 'path'
 import {trough} from 'trough'
 
-var pipeline = trough()
+const pipeline = trough()
   .use(function(fileName) {
     console.log('Checking… ' + fileName)
   })
