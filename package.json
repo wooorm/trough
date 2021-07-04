@@ -68,6 +68,11 @@
     "atLeast": 100,
     "detail": true,
     "strict": true,
-    "ignoreCatch": true
+    "ignoreCatch": true,
+    "#": "some nessecary `any`s",
+    "ignoreFiles": [
+      "index.js",
+      "index.d.ts"
+    ]
   }
 }

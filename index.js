@@ -1,8 +1,8 @@
 /**
- * @typedef {(error?: Error|null|undefined, ...output: unknown[]) => void} Callback
- * @typedef {(...input: unknown[]) => unknown} Middleware
+ * @typedef {(error?: Error|null|undefined, ...output: any[]) => void} Callback
+ * @typedef {(...input: any[]) => any} Middleware
  *
- * @typedef {(...input: unknown[]) => void} Run Call all middleware.
+ * @typedef {(...input: any[]) => void} Run Call all middleware.
  * @typedef {(fn: Middleware) => Pipeline} Use Add `fn` (middleware) to the list.
  * @typedef {{run: Run, use: Use}} Pipeline
  */
@@ -24,7 +24,6 @@ export function trough() {
   function run(...values) {
     let middlewareIndex = -1
     /** @type {Callback} */
-    // @ts-expect-error Assume it’s a callback.
     const callback = values.pop()
 
     if (typeof callback !== 'function') {
@@ -37,7 +36,7 @@ export function trough() {
      * Run the next `fn`, or we’re done.
      *
      * @param {Error|null|undefined} error
-     * @param {unknown[]} output
+     * @param {any[]} output
      */
     function next(error, ...output) {
       const fn = fns[++middlewareIndex]
@@ -96,12 +95,12 @@ export function wrap(middleware, callback) {
 
   /**
    * Call `middleware`.
-   * @param {unknown[]} parameters
+   * @param {any[]} parameters
    * @returns {void}
    */
   function wrapped(...parameters) {
     const fnExpectsCallback = middleware.length > parameters.length
-    /** @type {unknown} */
+    /** @type {any} */
     let result
 
     if (fnExpectsCallback) {
@@ -127,7 +126,6 @@ export function wrap(middleware, callback) {
 
     if (!fnExpectsCallback) {
       if (result instanceof Promise) {
-        // type-coverage:ignore-next-line Assume it’s a `Promise<unknown>`
         result.then(then, done)
       } else if (result instanceof Error) {
         done(result)
@@ -151,7 +149,7 @@ export function wrap(middleware, callback) {
   /**
    * Call `done` with one value.
    *
-   * @param {unknown} [value]
+   * @param {any} [value]
    */
   function then(value) {
     done(null, value)
