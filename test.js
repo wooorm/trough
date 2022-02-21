@@ -2,6 +2,7 @@
  * @typedef {import('./index.js').Callback} Callback
  */
 
+import process from 'node:process'
 import test from 'tape'
 import {trough} from './index.js'
 
