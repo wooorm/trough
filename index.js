@@ -2,9 +2,12 @@
  * @typedef {(error?: Error|null|undefined, ...output: Array<any>) => void} Callback
  * @typedef {(...input: Array<any>) => any} Middleware
  *
- * @typedef {(...input: Array<any>) => void} Run Call all middleware.
- * @typedef {(fn: Middleware) => Pipeline} Use Add `fn` (middleware) to the list.
+ * @typedef {(...input: Array<any>) => void} Run
+ *   Call all middleware.
+ * @typedef {(fn: Middleware) => Pipeline} Use
+ *   Add `fn` (middleware) to the list.
  * @typedef {{run: Run, use: Use}} Pipeline
+ *   Middleware.
  */
 
 /**
