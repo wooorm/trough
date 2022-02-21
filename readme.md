@@ -5,42 +5,80 @@
 [![Downloads][downloads-badge]][downloads]
 [![Size][size-badge]][size]
 
-> **trough** /trôf/ — a channel used to convey a liquid.
+`trough` is middleware.
 
-`trough` is like [`ware`][ware] with less sugar, and middleware functions can
-change the input of the next.
+## Contents
+
+*   [What is this?](#what-is-this)
+*   [When should I use this?](#when-should-i-use-this)
+*   [Install](#install)
+*   [Use](#use)
+*   [API](#api)
+    *   [`trough()`](#trough-1)
+    *   [`wrap(middleware, callback)(…input)`](#wrapmiddleware-callbackinput)
+    *   [`Trough`](#trough-2)
+*   [Types](#types)
+*   [Compatibility](#compatibility)
+*   [Security](#security)
+*   [Contribute](#contribute)
+*   [License](#license)
+
+## What is this?
+
+`trough` is like [`ware`][ware] with less sugar.
+Middleware functions can also change the input of the next.
+
+The word **trough** (`/trôf/`) means a channel used to convey a liquid.
+
+## When should I use this?
+
+You can use this package when you’re building something that accepts “plugins”,
+which are functions, that can be sync or async, promises or callbacks.
 
 ## Install
 
-This package is ESM only: Node 12+ is needed to use it and it must be `import`ed
-instead of `require`d.
-
-[npm][]:
+This package is [ESM only][esm].
+In Node.js (version 12.20+, 14.14+, or 16.0+), install with [npm][]:
 
 ```sh
 npm install trough
 ```
 
+In Deno with [`esm.sh`][esmsh]:
+
+```js
+import {trough} from "https://esm.sh/trough@2"
+```
+
+In browsers with [`esm.sh`][esmsh]:
+
+```html
+<script type="module">
+  import {trough} from "https://esm.sh/trough@2?bundle"
+</script>
+```
+
 ## Use
 
 ```js
-import fs from 'fs'
-import path from 'path'
+import process from 'node:process'
+import fs from 'node:fs'
+import path from 'node:path'
 import {trough} from 'trough'
 
 const pipeline = trough()
-  .use(function(fileName) {
+  .use(function (fileName) {
     console.log('Checking… ' + fileName)
   })
-  .use(function(fileName) {
+  .use(function (fileName) {
     return path.join(process.cwd(), fileName)
   })
-  .use(function(filePath, next) {
-    fs.stat(filePath, function(err, stats) {
-      next(err, {filePath, stats})
+  .use(function (filePath, next) {
+    fs.stat(filePath, function (error, stats) {
+      next(error, {filePath, stats})
     })
   })
-  .use(function(ctx, next) {
+  .use(function (ctx, next) {
     if (ctx.stats.isFile()) {
       fs.readFile(ctx.filePath, next)
     } else {
@@ -58,18 +96,18 @@ Yields:
 Checking… readme.md
 Checking… node_modules
 Error: Expected file
-    at ~/example.js:21:12
-    at wrapped (~/node_modules/trough/index.js:93:19)
-    at next (~/node_modules/trough/index.js:56:24)
-    at done (~/node_modules/trough/index.js:124:12)
-    at ~/node_modules/example.js:14:7
-    at FSReqWrap.oncomplete (fs.js:153:5)
-null <Buffer 23 20 74 72 6f 75 67 68 20 5b 21 5b 42 75 69 6c 64 20 53 74 61 74 75 73 5d 5b 74 72 61 76 69 73 2d 62 61 64 67 65 5d 5d 5b 74 72 61 76 69 73 5d 20 5b ... >
+    at ~/example.js:22:12
+    at wrapped (~/node_modules/trough/index.js:111:16)
+    at next (~/node_modules/trough/index.js:62:23)
+    at done (~/node_modules/trough/index.js:145:7)
+    at ~/example.js:15:7
+    at FSReqCallback.oncomplete (node:fs:199:5)
+null <Buffer 23 20 74 72 6f 75 67 68 0a 0a 5b 21 5b 42 75 69 6c 64 5d 5b 62 75 69 6c 64 2d 62 61 64 67 65 5d 5d 5b 62 75 69 6c 64 5d 0a 5b 21 5b 43 6f 76 65 72 61 ... 7994 more bytes>
 ```
 
 ## API
 
-This package exports the following identifiers: `trough` and `wrap`.
+This package exports the identifiers `trough` and `wrap`.
 There is no default export.
 
 ### `trough()`
@@ -106,9 +144,8 @@ Run the pipeline (all [`use()`][use]d middleware).
 Calls [`done`][done] on completion with either an error or the output of the
 last middleware.
 
-> Note!
-> as the length of input defines whether [async][] functions get a `next`
-> function, it’s recommended to keep `input` at one value normally.
+> 👉 **Note**: as the length of input defines whether [async][] functions get a
+> `next` function, it’s recommended to keep `input` at one value normally.
 
 ##### `function done(err?, [output…])`
 
@@ -138,8 +175,8 @@ The following example shows how returning an error stops the pipeline:
 import {trough} from 'trough'
 
 trough()
-  .use(function(val) {
-    return new Error('Got: ' + val)
+  .use(function (thing) {
+    return new Error('Got: ' + thing)
   })
   .run('some value', console.log)
 ```
@@ -158,8 +195,8 @@ The following example shows how throwing an error stops the pipeline:
 import {trough} from 'trough'
 
 trough()
-  .use(function(val) {
-    throw new Error('Got: ' + val)
+  .use(function (thing) {
+    throw new Error('Got: ' + thing)
   })
   .run('more value', console.log)
 ```
@@ -178,8 +215,8 @@ The following example shows how the first output can be modified:
 import {trough} from 'trough'
 
 trough()
-  .use(function(val) {
-    return 'even ' + val
+  .use(function (thing) {
+    return 'even ' + thing
   })
   .run('more value', 'untouched', console.log)
 ```
@@ -205,18 +242,18 @@ The following example shows how rejecting a promise stops the pipeline:
 import {trough} from 'trough'
 
 trough()
-  .use(function(val) {
-    return new Promise(function(resolve, reject) {
-      reject('Got: ' + val)
+  .use(function (thing) {
+    return new Promise(function (resolve, reject) {
+      reject('Got: ' + thing)
     })
   })
-  .run('val', console.log)
+  .run('thing', console.log)
 ```
 
 Yields:
 
 ```txt
-Got: val
+Got: thing
 ```
 
 The following example shows how the input isn’t touched by resolving to `null`.
@@ -225,9 +262,9 @@ The following example shows how the input isn’t touched by resolving to `null`
 import {trough} from 'trough'
 
 trough()
-  .use(function() {
-    return new Promise(function(resolve) {
-      setTimeout(function() {
+  .use(function () {
+    return new Promise(function (resolve) {
+      setTimeout(function () {
         resolve(null)
       }, 100)
     })
@@ -260,16 +297,16 @@ The following example shows how passing a first argument stops the pipeline:
 import {trough} from 'trough'
 
 trough()
-  .use(function(val, next) {
-    next(new Error('Got: ' + val))
+  .use(function (thing, next) {
+    next(new Error('Got: ' + thing))
   })
-  .run('val', console.log)
+  .run('thing', console.log)
 ```
 
 Yields:
 
 ```txt
-Error: Got: val
+Error: Got: thing
     at ~/example.js:5:10
 ```
 
@@ -279,8 +316,8 @@ The following example shows how more values than the input are passed.
 import {trough} from 'trough'
 
 trough()
-  .use(function(val, next) {
-    setTimeout(function() {
+  .use(function (thing, next) {
+    setTimeout(function () {
       next(null, null, 'values')
     }, 100)
   })
@@ -292,6 +329,25 @@ Yields:
 ```txt
 null 'some' 'values'
 ```
+
+## Types
+
+This package is fully typed with [TypeScript][].
+
+## Compatibility
+
+This package is at least compatible with all maintained versions of Node.js.
+As of now, that is Node.js 12.20+, 14.14+, and 16.0+.
+It also works in Deno and modern browsers.
+
+## Security
+
+This package is safe.
+
+## Contribute
+
+Yes please!
+See [How to Contribute to Open Source][contribute].
 
 ## License
 
@@ -320,6 +376,14 @@ null 'some' 'values'
 [license]: license
 
 [author]: https://wooorm.com
+
+[esm]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+
+[esmsh]: https://esm.sh
+
+[typescript]: https://www.typescriptlang.org
+
+[contribute]: https://opensource.guide/how-to-contribute/
 
 [ware]: https://github.com/segmentio/ware
 
