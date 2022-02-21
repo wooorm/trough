@@ -108,7 +108,7 @@ export function wrap(middleware, callback) {
     }
 
     try {
-      result = middleware(...parameters)
+      result = middleware.apply(this, parameters)
     } catch (error) {
       /** @type {Error} */
       const exception = error
