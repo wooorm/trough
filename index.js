@@ -1,8 +1,8 @@
 /**
- * @typedef {(error?: Error|null|undefined, ...output: any[]) => void} Callback
- * @typedef {(...input: any[]) => any} Middleware
+ * @typedef {(error?: Error|null|undefined, ...output: Array<any>) => void} Callback
+ * @typedef {(...input: Array<any>) => any} Middleware
  *
- * @typedef {(...input: any[]) => void} Run Call all middleware.
+ * @typedef {(...input: Array<any>) => void} Run Call all middleware.
  * @typedef {(fn: Middleware) => Pipeline} Use Add `fn` (middleware) to the list.
  * @typedef {{run: Run, use: Use}} Pipeline
  */
@@ -13,7 +13,7 @@
  * @returns {Pipeline}
  */
 export function trough() {
-  /** @type {Middleware[]} */
+  /** @type {Array<Middleware>} */
   const fns = []
   /** @type {Pipeline} */
   const pipeline = {run, use}
@@ -36,7 +36,7 @@ export function trough() {
      * Run the next `fn`, or we’re done.
      *
      * @param {Error|null|undefined} error
-     * @param {any[]} output
+     * @param {Array<any>} output
      */
     function next(error, ...output) {
       const fn = fns[++middlewareIndex]
@@ -95,7 +95,8 @@ export function wrap(middleware, callback) {
 
   /**
    * Call `middleware`.
-   * @param {any[]} parameters
+   * @this {any}
+   * @param {Array<any>} parameters
    * @returns {void}
    */
   function wrapped(...parameters) {
@@ -110,8 +111,7 @@ export function wrap(middleware, callback) {
     try {
       result = middleware.apply(this, parameters)
     } catch (error) {
-      /** @type {Error} */
-      const exception = error
+      const exception = /** @type {Error} */ (error)
 
       // Well, this is quite the pickle.
       // `middleware` received a callback and called it synchronously, but that

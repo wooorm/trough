@@ -88,7 +88,7 @@ test('promise middleware', (t) => {
 
   trough()
     .use(() => {
-      return new Promise((resolve, reject) => {
+      return new Promise((_, reject) => {
         reject(value)
       })
     })
@@ -101,7 +101,7 @@ test('promise middleware', (t) => {
       t.equal(value, 'some', 'should pass values to `fn`s')
 
       return new Promise((resolve) => {
-        resolve()
+        resolve(undefined)
       })
     })
     .run('some', (/** @type {void} */ error, /** @type {string} */ value) => {
