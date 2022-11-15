@@ -38,7 +38,7 @@ which are functions, that can be sync or async, promises or callbacks.
 ## Install
 
 This package is [ESM only][esm].
-In Node.js (version 12.20+, 14.14+, or 16.0+), install with [npm][]:
+In Node.js (version 14.14+, 16.0+), install with [npm][]:
 
 ```sh
 npm install trough
@@ -61,9 +61,9 @@ In browsers with [`esm.sh`][esmsh]:
 ## Use
 
 ```js
-import process from 'node:process'
 import fs from 'node:fs'
 import path from 'node:path'
+import process from 'node:process'
 import {trough} from 'trough'
 
 const pipeline = trough()
@@ -126,12 +126,12 @@ All other input values are the rest input values.
 The values given to `callback` are the input values, merged with every
 non-nullish output value.
 
-*   If `middleware` throws an error, returns a promise that is rejected, or
+*   if `middleware` throws an error, returns a promise that is rejected, or
     calls the given `done` function with an error, `callback` is called with
     that error
-*   If `middleware` returns a value or returns a promise that is resolved, that
+*   if `middleware` returns a value or returns a promise that is resolved, that
     value is the main output value
-*   If `middleware` calls `done`, all non-nullish values except for the first
+*   if `middleware` calls `done`, all non-nullish values except for the first
     one (the error) overwrite the output values
 
 ### `Trough`
@@ -333,11 +333,13 @@ null 'some' 'values'
 ## Types
 
 This package is fully typed with [TypeScript][].
+It exports the additional types `Callback`, `Middleware`, `Pipeline`, `Run`,
+and `Use`.
 
 ## Compatibility
 
 This package is at least compatible with all maintained versions of Node.js.
-As of now, that is Node.js 12.20+, 14.14+, and 16.0+.
+As of now, that is Node.js 14.14+ and 16.0+.
 It also works in Deno and modern browsers.
 
 ## Security
