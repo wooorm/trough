@@ -128,6 +128,47 @@ test('promise middleware', async function () {
       .use((/** @type {string} */ value) => {
         assert.equal(value, 'some', 'should pass values to `fn`s')
 
+        /**
+         * @callback resolveCallback
+         * @param {string} value
+         */
+        return {
+          then: (/** @type {resolveCallback} */ resolve) => {
+            resolve(value + 'thing')
+          }
+        }
+      })
+      .run('some', (/** @type {void} */ error, /** @type {string} */ value) => {
+        assert.ifError(error)
+        assert.equal(value, 'something', 'should pass values to `done`')
+        resolve(undefined)
+      })
+  })
+
+  await new Promise((resolve) => {
+    trough()
+      .use((/** @type {string} */ value) => {
+        assert.equal(value, 'some', 'should pass values to `fn`s')
+
+        return {
+          then: 'something'
+        }
+      })
+      .run(
+        'some',
+        (/** @type {void} */ error, /** @type {{ then: string }} */ value) => {
+          assert.ifError(error)
+          assert.equal(value.then, 'something', 'should pass values to `done`')
+          resolve(undefined)
+        }
+      )
+  })
+
+  await new Promise((resolve) => {
+    trough()
+      .use((/** @type {string} */ value) => {
+        assert.equal(value, 'some', 'should pass values to `fn`s')
+
         return new Promise((resolve) => {
           resolve(value + 'thing')
         })

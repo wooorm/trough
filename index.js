@@ -128,7 +128,7 @@ export function wrap(middleware, callback) {
     }
 
     if (!fnExpectsCallback) {
-      if (result instanceof Promise) {
+      if (result && result.then && typeof result.then === 'function') {
         result.then(then, done)
       } else if (result instanceof Error) {
         done(result)
