@@ -267,6 +267,48 @@ test('promise middleware', async function (t) {
       })
     }
   )
+
+  await t.test('should support thenables', async function () {
+    // See: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise#thenables>
+    let calls = 0
+
+    /** @type {Promise<unknown>} */
+    const promise = new Promise(function (resolve) {
+      trough()
+        .use(function () {
+          return {
+            /**
+             * @param {(value: unknown) => void} resolve
+             */
+            // eslint-disable-next-line unicorn/no-thenable
+            then(resolve) {
+              setTimeout(function () {
+                resolve(42)
+              })
+            }
+          }
+        })
+        .run(
+          /**
+           * @param {unknown} [error]
+           * @param {unknown} [value]
+           * @returns {undefined}
+           */
+          function (error, value) {
+            assert.equal(error, null)
+            assert.equal(value, 42)
+            calls++
+            resolve(undefined)
+          }
+        )
+    })
+
+    assert.equal(calls, 0)
+
+    await promise
+
+    assert.equal(calls, 1)
+  })
 })
 
 test('asynchronous middleware', async function (t) {
