@@ -1,412 +1,727 @@
 /**
- * @typedef {import('./lib/index.js').Callback} Callback
+ * @typedef {import('trough').Callback} Callback
  */
 
 import assert from 'node:assert/strict'
+import process from 'node:process'
 import test from 'node:test'
-import {trough} from './lib/index.js'
+import {trough} from 'trough'
 
-test('trough()', function () {
-  assert.equal(typeof trough, 'function', 'should be a function')
-  assert.equal(typeof trough(), 'object', 'should return an object')
+test('trough', async function (t) {
+  await t.test('should expose the public api', async function () {
+    assert.deepEqual(Object.keys(await import('trough')).sort(), [
+      'trough',
+      'wrap'
+    ])
+  })
 })
 
-test('use()', function () {
-  let p = trough()
+test('use()', async function (t) {
+  await t.test('should throw without `fn`', async function () {
+    const p = trough()
 
-  assert.throws(
-    () => {
-      // @ts-expect-error missing value.
+    assert.throws(function () {
+      // @ts-expect-error: check how missing value is handled.
       p.use()
-    },
-    /Expected `middelware` to be a function, not undefined/,
-    'should throw without `fn`'
-  )
+    }, /Expected `middelware` to be a function, not undefined/)
+  })
 
-  p = trough()
+  await t.test('should return self', async function () {
+    const p = trough()
 
-  assert.equal(
-    p.use(() => {}),
-    p,
-    'should return self'
-  )
+    assert.equal(
+      p.use(function () {}),
+      p
+    )
+  })
 })
 
-test('synchronous middleware', async function () {
-  const value = new Error('Foo')
+test('synchronous middleware', async function (t) {
+  await t.test('should pass returned errors to `done`', async function () {
+    const value = new Error('Foo')
+    let calls = 0
 
-  await new Promise((resolve) => {
     trough()
-      .use(() => {
+      .use(function () {
         return value
       })
-      .run((/** @type {Error} */ error) => {
-        assert.equal(error, value, 'should pass returned errors to `done`')
-        resolve(undefined)
-      })
+      .run(
+        /**
+         * @param {unknown} [error]
+         * @returns {undefined}
+         */
+        function (error) {
+          assert.equal(error, value)
+          calls++
+        }
+      )
+
+    assert.equal(calls, 1)
   })
 
-  await new Promise((resolve) => {
+  await t.test('should pass thrown errors to `done`', async function () {
+    const value = new Error('Foo')
+    let calls = 0
+
     trough()
-      .use(() => {
+      .use(function () {
         throw value
       })
-      .run((/** @type {Error} */ error) => {
-        assert.equal(error, value, 'should pass thrown errors to `done`')
-        resolve(undefined)
-      })
+      .run(
+        /**
+         * @param {unknown} [error]
+         * @returns {undefined}
+         */
+        function (error) {
+          assert.equal(error, value)
+          calls++
+        }
+      )
+
+    assert.equal(calls, 1)
   })
 
-  await new Promise((resolve) => {
+  await t.test('should pass values to `fn`s and `done`', async function () {
+    let calls = 0
+
     trough()
-      .use((/** @type {string} */ value) => {
-        assert.equal(value, 'some', 'should pass values to `fn`s')
-      })
-      .run('some', (/** @type {void} */ error, /** @type {string} */ value) => {
-        assert.ifError(error)
-        assert.equal(value, 'some', 'should pass values to `done`')
-        resolve(undefined)
-      })
+      .use(
+        /**
+         * @param {unknown} value
+         * @returns {undefined}
+         */
+        function (value) {
+          assert.equal(value, 'some')
+        }
+      )
+      .run(
+        'some',
+        /**
+         * @param {unknown} [error]
+         * @param {unknown} [value]
+         * @returns {undefined}
+         */
+        function (error, value) {
+          assert.ifError(error)
+          assert.equal(value, 'some')
+          calls++
+        }
+      )
+
+    assert.equal(calls, 1)
   })
 
-  await new Promise((resolve) => {
-    trough()
-      .use((/** @type {string} */ value) => {
-        assert.equal(value, 'some', 'should pass values to `fn`s')
-        return value + 'thing'
-      })
-      .use((/** @type {string} */ value) => {
-        assert.equal(value, 'something', 'should modify values')
-        return value + ' more'
-      })
-      .run('some', (/** @type {void} */ error, /** @type {string} */ value) => {
-        assert.ifError(error)
-        assert.equal(
-          value,
-          'something more',
-          'should pass modified values to `done`'
+  await t.test(
+    'should pass modified values to `fn`s and `done`',
+    async function () {
+      let calls = 0
+
+      trough()
+        .use(
+          /**
+           * @param {unknown} [value]
+           * @returns {string}
+           */
+          function (value) {
+            assert.equal(value, 'some')
+            return value + 'thing'
+          }
         )
-        resolve(undefined)
-      })
-  })
+        .use(
+          /**
+           * @param {unknown} [value]
+           * @returns {string}
+           */ function (value) {
+            assert.equal(value, 'something')
+            return value + ' more'
+          }
+        )
+        .run(
+          'some',
+          /**
+           * @param {unknown} [error]
+           * @param {unknown} [value]
+           * @returns {undefined}
+           */
+          function (error, value) {
+            assert.ifError(error)
+            assert.equal(value, 'something more')
+            calls++
+          }
+        )
+
+      assert.equal(calls, 1)
+    }
+  )
 })
 
-test('promise middleware', async function () {
-  const value = new Error('Foo')
+test('promise middleware', async function (t) {
+  await t.test('should pass rejected errors to `done`', async function () {
+    const value = new Error('Foo')
+    let calls = 0
 
-  await new Promise((resolve) => {
-    trough()
-      .use(() => {
-        return new Promise((_, reject) => {
-          reject(value)
-        })
-      })
-      .run((/** @type {Error} */ error) => {
-        assert.equal(error, value, 'should pass rejected errors to `done`')
-        resolve(undefined)
-      })
-  })
-
-  await new Promise((resolve) => {
-    trough()
-      .use((/** @type {string} */ value) => {
-        assert.equal(value, 'some', 'should pass values to `fn`s')
-
-        return new Promise((resolve) => {
-          resolve(undefined)
-        })
-      })
-      .run('some', (/** @type {void} */ error, /** @type {string} */ value) => {
-        assert.ifError(error)
-        assert.equal(value, 'some', 'should pass values to `done`')
-        resolve(undefined)
-      })
-  })
-
-  await new Promise((resolve) => {
-    trough()
-      .use((/** @type {string} */ value) => {
-        assert.equal(value, 'some', 'should pass values to `fn`s')
-
-        return new Promise((resolve) => {
-          resolve(value + 'thing')
-        })
-      })
-      .use((/** @type {string} */ value) => {
-        assert.equal(value, 'something', 'should modify values')
-
-        return new Promise((resolve) => {
-          resolve(value + ' more')
-        })
-      })
-      .run('some', (/** @type {void} */ error, /** @type {string} */ value) => {
-        assert.ifError(error)
-        assert.equal(
-          value,
-          'something more',
-          'should pass modified values to `done`'
-        )
-        resolve(undefined)
-      })
-  })
-})
-
-test('asynchronous middleware', async function () {
-  const value = new Error('Foo')
-
-  await new Promise((resolve) => {
-    trough()
-      .use((/** @type {Callback} */ next) => {
-        next(value)
-      })
-      .run((/** @type {Error} */ error) => {
-        assert.equal(error, value, 'should pass given errors to `done`')
-        resolve(undefined)
-      })
-  })
-
-  await new Promise((resolve) => {
-    trough()
-      .use((/** @type {Callback} */ next) => {
-        setImmediate(() => {
-          next(value)
-        })
-      })
-      .run((/** @type {Error} */ error) => {
-        assert.equal(error, value, 'should pass async given errors to `done`')
-        resolve(undefined)
-      })
-  })
-
-  await new Promise((resolve) => {
-    trough()
-      .use((/** @type {Callback} */ next) => {
-        next(value)
-        next(new Error('Other'))
-      })
-      .run((/** @type {Error} */ error) => {
-        assert.equal(error, value, 'should ignore multiple sync `next` calls')
-        resolve(undefined)
-      })
-  })
-
-  await new Promise((resolve) => {
-    trough()
-      .use((/** @type {Callback} */ next) => {
-        setImmediate(() => {
-          next(value)
-          setImmediate(() => {
-            next(new Error('Other'))
+    /** @type {Promise<unknown>} */
+    const promise = new Promise(function (resolve) {
+      trough()
+        .use(function () {
+          return new Promise(function (_, reject) {
+            reject(value)
           })
         })
-      })
-      .run((/** @type {Error} */ error) => {
-        assert.equal(error, value, 'should ignore multiple async `next` calls')
-        resolve(undefined)
-      })
-  })
-
-  await new Promise((resolve) => {
-    trough()
-      .use((/** @type {string} */ value, /** @type {Callback} */ next) => {
-        assert.equal(value, 'some', 'should pass values to `fn`s')
-        setImmediate(next)
-      })
-      .run('some', (/** @type {void} */ error, /** @type {string} */ value) => {
-        assert.ifError(error)
-        assert.equal(value, 'some', 'should pass values to `done`')
-        resolve(undefined)
-      })
-  })
-
-  await new Promise((resolve) => {
-    trough()
-      .use((/** @type {string} */ value, /** @type {Callback} */ next) => {
-        assert.equal(value, 'some', 'should pass values to `fn`s')
-
-        setImmediate(() => {
-          next(null, value + 'thing')
-        })
-      })
-      .use((/** @type {string} */ value, /** @type {Callback} */ next) => {
-        assert.equal(value, 'something', 'should modify values')
-
-        setImmediate(() => {
-          next(null, value + ' more')
-        })
-      })
-      .run('some', (/** @type {void} */ error, /** @type {string} */ value) => {
-        assert.ifError(error)
-        assert.equal(
-          value,
-          'something more',
-          'should pass modified values to `done`'
+        .run(
+          /**
+           * @param {unknown} [error]
+           * @returns {undefined}
+           */
+          function (error) {
+            assert.equal(error, value)
+            calls++
+            resolve(undefined)
+          }
         )
-        resolve(undefined)
-      })
+    })
+
+    assert.equal(calls, 0)
+
+    await promise
+
+    assert.equal(calls, 1)
   })
+
+  await t.test('should pass values to `fn`s and `done`', async function () {
+    await new Promise(function (resolve) {
+      trough()
+        .use(
+          /**
+           * @param {unknown} value
+           * @returns {Promise<undefined>}
+           */
+          function (value) {
+            assert.equal(value, 'some')
+
+            return new Promise(function (resolve) {
+              resolve(undefined)
+            })
+          }
+        )
+        .run(
+          'some',
+          /**
+           * @param {unknown} [error]
+           * @param {unknown} [value]
+           * @returns {undefined}
+           */
+          function (error, value) {
+            assert.ifError(error)
+            assert.equal(value, 'some')
+            resolve(undefined)
+          }
+        )
+    })
+  })
+
+  await t.test(
+    'should pass modified values to `fn`s and `done`',
+    async function () {
+      await new Promise(function (resolve) {
+        trough()
+          .use(
+            /**
+             * @param {unknown} [value]
+             * @returns {Promise<string>}
+             */
+            function (value) {
+              assert.equal(value, 'some')
+
+              return new Promise(function (resolve) {
+                resolve(value + 'thing')
+              })
+            }
+          )
+          .use(
+            /**
+             * @param {unknown} [value]
+             * @returns {Promise<string>}
+             */
+            function (value) {
+              assert.equal(value, 'something')
+
+              return new Promise(function (resolve) {
+                resolve(value + ' more')
+              })
+            }
+          )
+          .run(
+            'some',
+            /**
+             * @param {unknown} [error]
+             * @param {unknown} [value]
+             * @returns {undefined}
+             */
+            function (error, value) {
+              assert.ifError(error)
+              assert.equal(value, 'something more')
+              resolve(undefined)
+            }
+          )
+      })
+    }
+  )
+})
+
+test('asynchronous middleware', async function (t) {
+  const value = new Error('Foo')
+
+  await t.test('should pass given errors to `done`', async function () {
+    await new Promise(function (resolve) {
+      trough()
+        .use(
+          /**
+           * @param {Callback} next
+           * @returns {undefined}
+           */
+          function (next) {
+            next(value)
+          }
+        )
+        .run(
+          /**
+           * @param {unknown} [error]
+           * @returns {undefined}
+           */
+          function (error) {
+            assert.equal(error, value)
+            resolve(undefined)
+          }
+        )
+    })
+  })
+
+  await t.test('should pass async given errors to `done`', async function () {
+    await new Promise(function (resolve) {
+      trough()
+        .use(
+          /**
+           * @param {Callback} next
+           * @returns {undefined}
+           */
+          function (next) {
+            setImmediate(function () {
+              next(value)
+            })
+          }
+        )
+        .run(
+          /**
+           * @param {unknown} [error]
+           * @returns {undefined}
+           */
+          function (error) {
+            assert.equal(error, value)
+            resolve(undefined)
+          }
+        )
+    })
+  })
+
+  await t.test('should ignore multiple sync `next` calls', async function () {
+    await new Promise(function (resolve) {
+      trough()
+        .use(
+          /**
+           * @param {Callback} next
+           * @returns {undefined}
+           */
+          function (next) {
+            next(value)
+            next(new Error('Other'))
+          }
+        )
+        .run(
+          /**
+           * @param {unknown} [error]
+           * @returns {undefined}
+           */
+          function (error) {
+            assert.equal(error, value)
+            resolve(undefined)
+          }
+        )
+    })
+  })
+
+  await t.test('should ignore multiple async `next` calls', async function () {
+    await new Promise(function (resolve) {
+      trough()
+        .use(
+          /**
+           * @param {Callback} next
+           * @returns {undefined}
+           */
+          function (next) {
+            setImmediate(function () {
+              next(value)
+              setImmediate(function () {
+                next(new Error('Other'))
+              })
+            })
+          }
+        )
+        .run(
+          /**
+           * @param {unknown} [error]
+           * @returns {undefined}
+           */
+          function (error) {
+            assert.equal(error, value)
+            resolve(undefined)
+          }
+        )
+    })
+  })
+
+  await t.test('should pass values to `fn`s and `done`', async function () {
+    await new Promise(function (resolve) {
+      trough()
+        .use(
+          /**
+           * @param {unknown} value
+           * @param {Callback} next
+           * @returns {undefined}
+           */
+          function (value, next) {
+            assert.equal(value, 'some')
+            setImmediate(next)
+          }
+        )
+        .run(
+          'some',
+          /**
+           * @param {unknown} [error]
+           * @param {unknown} [value]
+           * @returns {undefined}
+           */
+          function (error, value) {
+            assert.ifError(error)
+            assert.equal(value, 'some')
+            resolve(undefined)
+          }
+        )
+    })
+  })
+
+  await t.test(
+    'should pass modified values to `fn`s and `done`',
+    async function () {
+      await new Promise(function (resolve) {
+        trough()
+          .use(
+            /**
+             * @param {unknown} value
+             * @param {Callback} next
+             * @returns {undefined}
+             */
+            function (value, next) {
+              assert.equal(value, 'some')
+
+              setImmediate(function () {
+                next(undefined, value + 'thing')
+              })
+            }
+          )
+          .use(
+            /**
+             * @param {unknown} value
+             * @param {Callback} next
+             * @returns {undefined}
+             */
+            function (value, next) {
+              assert.equal(value, 'something')
+
+              setImmediate(function () {
+                next(undefined, value + ' more')
+              })
+            }
+          )
+          .run(
+            'some',
+            /**
+             * @param {unknown} [error]
+             * @param {unknown} [value]
+             * @returns {undefined}
+             */
+            function (error, value) {
+              assert.ifError(error)
+              assert.equal(value, 'something more')
+              resolve(undefined)
+            }
+          )
+      })
+    }
+  )
 })
 
 test('run()', async function (t) {
-  assert.throws(
-    () => {
+  // Remove the crash handlers by the test runner.
+  const before = process.listeners('uncaughtException')
+
+  for (const listener of before) {
+    process.off('uncaughtException', listener)
+  }
+
+  await t.test('should throw if `done` is not a function', async function () {
+    assert.throws(function () {
       trough().run()
-    },
-    /^TypeError: Expected function as last argument, not undefined$/,
-    'should throw if `done` is not a function'
-  )
-
-  await new Promise((resolve) => {
-    trough()
-      .use((/** @type {string} */ value) => {
-        assert.equal(value, 'some', 'input')
-
-        return value + 'thing'
-      })
-      .use((/** @type {string} */ value) => {
-        assert.equal(value, 'something', 'sync')
-
-        return new Promise((resolve) => {
-          resolve(value + ' more')
-        })
-      })
-      .use((/** @type {string} */ value, /** @type {Callback} */ next) => {
-        assert.equal(value, 'something more', 'promise')
-
-        setImmediate(() => {
-          next(null, value + '.')
-        })
-      })
-      .run('some', (/** @type {void} */ error, /** @type {string} */ value) => {
-        assert.ifError(error)
-        assert.equal(value, 'something more.', 'async')
-        resolve(undefined)
-      })
+    }, /^TypeError: Expected function as last argument, not undefined$/)
   })
 
-  await t.test('should throw errors thrown from `done` (#1)', () => {
-    assert.throws(() => {
-      trough().run(() => {
+  await t.test('should work all together', async function () {
+    await new Promise(function (resolve) {
+      trough()
+        .use(
+          /**
+           * @param {unknown} [value]
+           * @returns {string}
+           */
+          function (value) {
+            assert.equal(value, 'some')
+
+            return value + 'thing'
+          }
+        )
+        .use(
+          /**
+           * @param {unknown} [value]
+           * @returns {Promise<string>}
+           */
+          function (value) {
+            assert.equal(value, 'something')
+
+            return new Promise(function (resolve) {
+              resolve(value + ' more')
+            })
+          }
+        )
+        .use(
+          /**
+           * @param {unknown} value
+           * @param {Callback} next
+           * @returns {undefined}
+           */
+          function (value, next) {
+            assert.equal(value, 'something more')
+
+            setImmediate(function () {
+              next(undefined, value + '.')
+            })
+          }
+        )
+        .run(
+          'some',
+          /**
+           * @param {unknown} [error]
+           * @param {unknown} [value]
+           * @returns {undefined}
+           */
+          function (error, value) {
+            assert.ifError(error)
+            assert.equal(value, 'something more.')
+            resolve(undefined)
+          }
+        )
+    })
+  })
+
+  await t.test('should throw errors thrown from `done` (#1)', function () {
+    assert.throws(function () {
+      trough().run(function () {
         throw new Error('alpha')
       })
     }, /^Error: alpha$/)
   })
 
-  // To do: Node test runner doesn’t like this case (in `tape` it was fine).
-  // Maybe they’ll fix that in the future?
-  // await t.test('should throw errors thrown from `done` (#2)', async () => {
-  //   await new Promise((resolve) => {
-  //     process.once('uncaughtException', (error) => {
-  //       assert.equal(String(error), 'Error: bravo', 'zzz')
-  //       resolve(undefined)
-  //     })
+  await t.test(
+    'should throw errors thrown from `done` (#2)',
+    async function () {
+      await new Promise(function (resolve) {
+        process.once('uncaughtException', function (error) {
+          assert.equal(String(error), 'Error: bravo')
+          resolve(undefined)
+        })
 
-  //     trough()
-  //       .use((/** @type {Callback} */ next) => {
-  //         setImmediate(next)
-  //       })
-  //       .run(() => {
-  //         throw new Error('bravo')
-  //       })
-  //   })
-  // })
-
-  // To do: Node test runner doesn’t like this case (in `tape` it was fine).
-  // Maybe they’ll fix that in the future?
-  // await t.test('should rethrow errors thrown from `done` (#1)', async () => {
-  //   await new Promise((resolve) => {
-  //     process.once('uncaughtException', (error) => {
-  //       assert.equal(String(error), 'Error: bravo')
-  //       resolve(undefined)
-  //     })
-
-  //     trough()
-  //       .use((/** @type {Callback} */ next) => {
-  //         setImmediate(() => {
-  //           next(new Error('bravo'))
-  //         })
-  //       })
-  //       .run((/** @type {Error} */ error) => {
-  //         throw error
-  //       })
-  //   })
-  // })
-
-  await t.test('should rethrow errors thrown from `done` (#2)', async () => {
-    try {
-      await new Promise(() => {
         trough()
-          .use(() => {
+          .use(
+            /**
+             * @param {Callback} next
+             * @returns {undefined}
+             */
+            function (next) {
+              setImmediate(next)
+            }
+          )
+          .run(function () {
             throw new Error('bravo')
           })
-          .run((/** @type {Error} */ error) => {
-            throw error
-          })
       })
-    } catch (error) {
-      assert.equal(String(error), 'Error: bravo')
     }
-  })
+  )
 
-  // To do: Node test runner doesn’t like this case (in `tape` it was fine).
-  // Maybe they’ll fix that in the future?
-  // await t.test('should not swallow uncaught exceptions (#1)', async () => {
-  //   await new Promise((resolve) => {
-  //     process.once('uncaughtException', (error) => {
-  //       assert.equal(String(error), 'Error: charlie')
-  //       resolve(undefined)
-  //     })
+  await t.test(
+    'should rethrow errors thrown from `done` (#1)',
+    async function () {
+      await new Promise(function (resolve) {
+        process.once('uncaughtException', function (error) {
+          assert.equal(String(error), 'Error: bravo')
+          resolve(undefined)
+        })
 
-  //     trough()
-  //       .use((/** @type {Callback} */ next) => {
-  //         setImmediate(next)
-  //       })
-  //       .run(() => {
-  //         setImmediate(() => {
-  //           throw new Error('charlie')
-  //         })
-  //       })
-  //   })
-  // })
-
-  // To do: Node test runner doesn’t like this case (in `tape` it was fine).
-  // Maybe they’ll fix that in the future?
-  // await t.test('should not swallow uncaught exceptions (#2)', async () => {
-  //   await new Promise((resolve) => {
-  //     process.once('uncaughtException', (error) => {
-  //       assert.equal(String(error), 'Error: charlie')
-  //       resolve(undefined)
-  //     })
-
-  //     trough()
-  //       .use((/** @type {Callback} */ next) => {
-  //         setImmediate(() => {
-  //           next(new Error('charlie'))
-  //         })
-  //       })
-  //       .run((/** @type {Error} */ error) => {
-  //         setImmediate(() => {
-  //           throw error
-  //         })
-  //       })
-  //   })
-  // })
-
-  await t.test('should not swallow errors in the `done` handler', async () => {
-    const value = new Error('hotel')
-
-    try {
-      await new Promise(() => {
         trough()
-          .use((/** @type {Callback} */ next) => {
-            next(value)
-          })
-          .run((/** @type {Error} */ error) => {
-            throw error
+          .use(
+            /**
+             * @param {Callback} next
+             * @returns {undefined}
+             */
+            function (next) {
+              setImmediate(function () {
+                next(new Error('bravo'))
+              })
+            }
+          )
+          .run(
+            /**
+             * @param {unknown} [error]
+             * @returns {undefined}
+             */
+            function (error) {
+              throw error
+            }
+          )
+      })
+    }
+  )
+
+  await t.test(
+    'should rethrow errors thrown from `done` (#2)',
+    async function () {
+      try {
+        await new Promise(function () {
+          trough()
+            .use(function () {
+              throw new Error('bravo')
+            })
+            .run(
+              /**
+               * @param {unknown} [error]
+               * @returns {undefined}
+               */
+              function (error) {
+                throw error
+              }
+            )
+        })
+      } catch (error) {
+        assert.equal(String(error), 'Error: bravo')
+      }
+    }
+  )
+
+  await t.test(
+    'should not swallow uncaught exceptions (#1)',
+    async function () {
+      await new Promise(function (resolve) {
+        process.once('uncaughtException', function (error) {
+          assert.equal(String(error), 'Error: charlie')
+          resolve(undefined)
+        })
+        trough()
+          .use(
+            /**
+             * @param {Callback} next
+             * @returns {undefined}
+             */
+            function (next) {
+              setImmediate(next)
+            }
+          )
+          .run(function () {
+            setImmediate(function () {
+              throw new Error('charlie')
+            })
           })
       })
-    } catch (error) {
-      assert.equal(error, value, 'should pass the error')
     }
-  })
+  )
+
+  await t.test(
+    'should not swallow uncaught exceptions (#2)',
+    async function () {
+      await new Promise(function (resolve) {
+        process.once('uncaughtException', function (error) {
+          assert.equal(String(error), 'Error: charlie')
+          resolve(undefined)
+        })
+        trough()
+          .use(
+            /**
+             * @param {Callback} next
+             * @returns {undefined}
+             */
+            function (next) {
+              setImmediate(function () {
+                next(new Error('charlie'))
+              })
+            }
+          )
+          .run(
+            /**
+             * @param {unknown} [error]
+             * @returns {undefined}
+             */
+            function (error) {
+              setImmediate(function () {
+                throw error
+              })
+            }
+          )
+      })
+    }
+  )
+
+  await t.test(
+    'should not swallow errors in the `done` handler',
+    async function () {
+      const value = new Error('hotel')
+
+      try {
+        await new Promise(function () {
+          trough()
+            .use(
+              /**
+               * @param {Callback} next
+               * @returns {undefined}
+               */
+              function (next) {
+                next(value)
+              }
+            )
+            .run(
+              /**
+               * @param {unknown} [error]
+               * @returns {undefined}
+               */
+              function (error) {
+                throw error
+              }
+            )
+        })
+      } catch (error) {
+        assert.equal(error, value, 'should pass the error')
+      }
+    }
+  )
+
+  // Add the test runner listeners.
+  for (const listener of before) {
+    process.on('uncaughtException', listener)
+  }
 })
