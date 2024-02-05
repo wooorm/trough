@@ -21,6 +21,7 @@
   "type": "module",
   "exports": "./index.js",
   "files": [
+    "lib/",
     "index.d.ts.map",
     "index.d.ts",
     "index.js"
@@ -69,8 +70,8 @@
     "ignoreCatch": true,
     "#": "some nessecary `any`s",
     "ignoreFiles": [
-      "index.js",
-      "index.d.ts"
+      "lib/index.js",
+      "lib/index.d.ts"
     ]
   }
 }

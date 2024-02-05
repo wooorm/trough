@@ -1,10 +1,10 @@
 /**
- * @typedef {import('./index.js').Callback} Callback
+ * @typedef {import('./lib/index.js').Callback} Callback
  */
 
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import {trough} from './index.js'
+import {trough} from './lib/index.js'
 
 test('trough()', function () {
   assert.equal(typeof trough, 'function', 'should be a function')
