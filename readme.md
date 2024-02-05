@@ -1,9 +1,9 @@
 # trough
 
-[![Build][build-badge]][build]
-[![Coverage][coverage-badge]][coverage]
-[![Downloads][downloads-badge]][downloads]
-[![Size][size-badge]][size]
+[![Build][badge-build-image]][badge-build-url]
+[![Coverage][badge-coverage-image]][badge-coverage-url]
+[![Downloads][badge-downloads-image]][badge-downloads-url]
+[![Size][badge-size-image]][badge-size-url]
 
 `trough` is middleware.
 
@@ -15,9 +15,12 @@
 *   [Use](#use)
 *   [API](#api)
     *   [`trough()`](#trough-1)
-    *   [`wrap(middleware, callback)(…input)`](#wrapmiddleware-callbackinput)
-    *   [`Trough`](#trough-2)
-*   [Types](#types)
+    *   [`wrap(middleware, callback)`](#wrapmiddleware-callback)
+    *   [`Callback`](#callback)
+    *   [`Middleware`](#middleware)
+    *   [`Pipeline`](#pipeline)
+    *   [`Run`](#run)
+    *   [`Use`](#use-1)
 *   [Compatibility](#compatibility)
 *   [Security](#security)
 *   [Contribute](#contribute)
@@ -25,7 +28,7 @@
 
 ## What is this?
 
-`trough` is like [`ware`][ware] with less sugar.
+`trough` is like [`ware`][github-segmentio-ware] with less sugar.
 Middleware functions can also change the input of the next.
 
 The word **trough** (`/trôf/`) means a channel used to convey a liquid.
@@ -37,24 +40,25 @@ which are functions, that can be sync or async, promises or callbacks.
 
 ## Install
 
-This package is [ESM only][esm].
-In Node.js (version 14.14+, 16.0+), install with [npm][]:
+This package is [ESM only][github-gist-esm].
+In Node.js (version 16+),
+install with [npm][npm-install]:
 
 ```sh
 npm install trough
 ```
 
-In Deno with [`esm.sh`][esmsh]:
+In Deno with [`esm.sh`][esm-sh]:
 
 ```js
-import {trough} from "https://esm.sh/trough@2"
+import {trough, wrap} from 'https://esm.sh/trough@2'
 ```
 
-In browsers with [`esm.sh`][esmsh]:
+In browsers with [`esm.sh`][esm-sh]:
 
 ```html
 <script type="module">
-  import {trough} from "https://esm.sh/trough@2?bundle"
+  import {trough, wrap} from 'https://esm.sh/trough@2?bundle'
 </script>
 ```
 
@@ -107,67 +111,95 @@ null <Buffer 23 20 74 72 6f 75 67 68 0a 0a 5b 21 5b 42 75 69 6c 64 5d 5b 62 75 6
 
 ## API
 
-This package exports the identifiers `trough` and `wrap`.
+This package exports the identifiers
+[`trough`][api-trough] and
+[`wrap`][api-wrap].
 There is no default export.
+
+It exports the [TypeScript][] types
+[`Callback`][api-callback],
+[`Middleware`][api-middleware],
+[`Pipeline`][api-pipeline],
+[`Run`][api-run],
+and [`Use`][api-use].
 
 ### `trough()`
 
-Create a new [`Trough`][trough].
+Create new middleware.
 
-### `wrap(middleware, callback)(…input)`
+###### Parameters
 
-Call `middleware` with all input.
-If `middleware` accepts more arguments than given in input, an extra `done`
-function is passed in after the input when calling it.
-In that case, `done` must be called.
+There are no parameters.
+
+###### Returns
+
+[`Pipeline`][api-pipeline].
+
+### `wrap(middleware, callback)`
+
+Wrap `middleware` into a uniform interface.
+
+You can pass all input to the resulting function.
+`callback` is then called with the output of `middleware`.
+
+If `middleware` accepts more arguments than the later given in input,
+an extra `done` function is passed to it after that input,
+which must be called by `middleware`.
 
 The first value in `input` is the main input value.
 All other input values are the rest input values.
-The values given to `callback` are the input values, merged with every
-non-nullish output value.
+The values given to `callback` are the input values,
+merged with every non-nullish output value.
 
-*   if `middleware` throws an error, returns a promise that is rejected, or
-    calls the given `done` function with an error, `callback` is called with
-    that error
-*   if `middleware` returns a value or returns a promise that is resolved, that
-    value is the main output value
-*   if `middleware` calls `done`, all non-nullish values except for the first
-    one (the error) overwrite the output values
+*   if `middleware` throws an error,
+    returns a promise that is rejected,
+    or calls the given `done` function with an error,
+    `callback` is called with that error
+*   if `middleware` returns a value or returns a promise that is resolved,
+    that value is the main output value
+*   if `middleware` calls `done`,
+    all non-nullish values except for the first one (the error) overwrite the
+    output values
 
-### `Trough`
+###### Parameters
 
-A pipeline.
+*   `middleware` ([`Middleware`][api-middleware])
+    — function to wrap
+*   `callback` ([`Callback`][api-callback])
+    — callback called with the output of `middleware`
 
-#### `Trough#run([input…, ]done)`
+###### Returns
 
-Run the pipeline (all [`use()`][use]d middleware).
-Calls [`done`][done] on completion with either an error or the output of the
-last middleware.
+Wrapped middleware ([`Run`][api-run]).
 
-> 👉 **Note**: as the length of input defines whether [async][] functions get a
-> `next` function, it’s recommended to keep `input` at one value normally.
+### `Callback`
 
-##### `function done(err?, [output…])`
+Callback function (TypeScript type).
 
-The final handler passed to [`run()`][run], called with an error if a
-[middleware function][fn] rejected, passed, or threw one, or the output of the
-last middleware function.
+###### Parameters
 
-#### `Trough#use(fn)`
+*   `error` (`Error`, optional)
+    — error, if any
+*   `...output` (`Array<unknown>`, optional)
+    — output values
 
-Add `fn`, a [middleware function][fn], to the pipeline.
+###### Returns
 
-##### `function fn([input…, ][next])`
+Nothing (`undefined`).
 
-A middleware function called with the output of its predecessor.
+### `Middleware`
+
+A middleware function called with the output of its predecessor (TypeScript
+type).
 
 ###### Synchronous
 
-If `fn` returns or throws an error, the pipeline fails and `done` is called
-with that error.
+If `fn` returns or throws an error,
+the pipeline fails and `done` is called with that error.
 
-If `fn` returns a value (neither `null` nor `undefined`), the first `input` of
-the next function is set to that value (all other `input` is passed through).
+If `fn` returns a value (neither `null` nor `undefined`),
+the first `input` of the next function is set to that value
+(all other `input` is passed through).
 
 The following example shows how returning an error stops the pipeline:
 
@@ -229,12 +261,14 @@ null 'even more value' 'untouched'
 
 ###### Promise
 
-If `fn` returns a promise, and that promise rejects, the pipeline fails and
-`done` is called with the rejected value.
+If `fn` returns a promise,
+and that promise rejects,
+the pipeline fails and `done` is called with the rejected value.
 
-If `fn` returns a promise, and that promise resolves with a value (neither
-`null` nor `undefined`), the first `input` of the next function is set to that
-value (all other `input` is passed through).
+If `fn` returns a promise,
+and that promise resolves with a value (neither `null` nor `undefined`),
+the first `input` of the next function is set to that value (all other `input`
+is passed through).
 
 The following example shows how rejecting a promise stops the pipeline:
 
@@ -280,16 +314,19 @@ null 'Input'
 
 ###### Asynchronous
 
-If `fn` accepts one more argument than the given `input`, a `next` function is
-given (after the input).  `next` must be called, but doesn’t have to be called
-async.
+If `fn` accepts one more argument than the given `input`,
+a `next` function is given (after the input).
+`next` must be called, but doesn’t have to be called async.
 
 If `next` is given a value (neither `null` nor `undefined`) as its first
-argument, the pipeline fails and `done` is called with that value.
+argument,
+the pipeline fails and `done` is called with that value.
 
 If `next` is given no value (either `null` or `undefined`) as the first
-argument, all following non-nullish values change the input of the following
-function, and all nullish values default to the `input`.
+argument,
+all following non-nullish values change the input of the following
+function,
+and all nullish values default to the `input`.
 
 The following example shows how passing a first argument stops the pipeline:
 
@@ -330,17 +367,70 @@ Yields:
 null 'some' 'values'
 ```
 
-## Types
+###### Parameters
 
-This package is fully typed with [TypeScript][].
-It exports the additional types `Callback`, `Middleware`, `Pipeline`, `Run`,
-and `Use`.
+*   `...input` (`Array<any>`, optional)
+    — input values
+
+###### Returns
+
+Output, promise, etc (`any`).
+
+### `Pipeline`
+
+Pipeline (TypeScript type).
+
+###### Properties
+
+*   `run` ([`Run`][api-run])
+    — run the pipeline
+*   `use` ([`Use`][api-use])
+    — add middleware
+
+### `Run`
+
+Call all middleware (TypeScript type).
+
+Calls `done` on completion with either an error or the output of the
+last middleware.
+
+> 👉 **Note**: as the length of input defines whether async functions get a
+> `next` function,
+> it’s recommended to keep `input` at one value normally.
+
+###### Parameters
+
+*   `...input` (`Array<any>`, optional)
+    — input values
+*   `done` ([`Callback`][api-callback])
+    — callback called when done
+
+###### Returns
+
+Nothing (`undefined`).
+
+### `Use`
+
+Add middleware (TypeScript type).
+
+###### Parameters
+
+*   `middleware` ([`Middleware`][api-middleware])
+    — middleware function
+
+###### Returns
+
+Current pipeline ([`Pipeline`][api-pipeline]).
 
 ## Compatibility
 
-This package is at least compatible with all maintained versions of Node.js.
-As of now, that is Node.js 14.14+ and 16.0+.
-It also works in Deno and modern browsers.
+This projects is compatible with maintained versions of Node.js.
+
+When we cut a new major release,
+we drop support for unmaintained versions of Node.
+This means we try to keep the current release line,
+`trough@2`,
+compatible with Node.js 12.
 
 ## Security
 
@@ -349,54 +439,56 @@ This package is safe.
 ## Contribute
 
 Yes please!
-See [How to Contribute to Open Source][contribute].
+See [How to Contribute to Open Source][open-source-guide-contribute].
 
 ## License
 
-[MIT][license] © [Titus Wormer][author]
+[MIT][file-license] © [Titus Wormer][wooorm]
 
 <!-- Definitions -->
 
-[build-badge]: https://github.com/wooorm/trough/workflows/main/badge.svg
+[api-callback]: #callback
 
-[build]: https://github.com/wooorm/trough/actions
+[api-middleware]: #middleware
 
-[coverage-badge]: https://img.shields.io/codecov/c/github/wooorm/trough.svg
+[api-pipeline]: #pipeline
 
-[coverage]: https://codecov.io/github/wooorm/trough
+[api-run]: #run
 
-[downloads-badge]: https://img.shields.io/npm/dm/trough.svg
+[api-trough]: #trough
 
-[downloads]: https://www.npmjs.com/package/trough
+[api-use]: #use
 
-[size-badge]: https://img.shields.io/bundlephobia/minzip/trough.svg
+[api-wrap]: #wrapmiddleware-callback
 
-[size]: https://bundlephobia.com/result?p=trough
+[badge-build-image]: https://github.com/wooorm/trough/workflows/main/badge.svg
 
-[npm]: https://docs.npmjs.com/cli/install
+[badge-build-url]: https://github.com/wooorm/trough/actions
 
-[license]: license
+[badge-coverage-image]: https://img.shields.io/codecov/c/github/wooorm/trough.svg
 
-[author]: https://wooorm.com
+[badge-coverage-url]: https://codecov.io/github/wooorm/trough
 
-[esm]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+[badge-downloads-image]: https://img.shields.io/npm/dm/trough.svg
 
-[esmsh]: https://esm.sh
+[badge-downloads-url]: https://www.npmjs.com/package/trough
+
+[badge-size-image]: https://img.shields.io/bundlejs/size/trough
+
+[badge-size-url]: https://bundlejs.com/?q=trough
+
+[npm-install]: https://docs.npmjs.com/cli/install
+
+[esm-sh]: https://esm.sh
+
+[file-license]: license
+
+[github-gist-esm]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+
+[github-segmentio-ware]: https://github.com/segmentio/ware
+
+[open-source-guide-contribute]: https://opensource.guide/how-to-contribute/
 
 [typescript]: https://www.typescriptlang.org
 
-[contribute]: https://opensource.guide/how-to-contribute/
-
-[ware]: https://github.com/segmentio/ware
-
-[trough]: #trough-1
-
-[use]: #troughusefn
-
-[run]: #troughruninput-done
-
-[fn]: #function-fninput-next
-
-[done]: #function-doneerr-output
-
-[async]: #asynchronous
+[wooorm]: https://wooorm.com
